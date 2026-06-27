@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    
+    <!-- PWA 基础 meta 标签 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="幸运转盘">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- SEO 和社交分享 -->
+    <meta name="description" content="一个精美的交互式转盘工具，支持自定义选项、智能推荐、随机决策。让命运帮你做决定！">
+    <meta name="keywords" content="转盘,抽奖,随机选择,决策工具,幸运轮盘,wheel of fortune">
+    <meta name="author" content="Wheel of Fortune">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="幸运转盘 - 小转盘工具">
+    <meta property="og:description" content="精美的交互式转盘，支持自定义选项、智能推荐、让命运帮你做决定！">
+    <meta property="og:image" content="icons/icon-512x512.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="幸运转盘 - 小转盘工具">
+    <meta name="twitter:description" content="精美的交互式转盘，支持自定义选项、智能推荐！">
+    
+    <title>幸运转盘 - 小转盘工具</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- 图标（多平台兼容） -->
+    <link rel="icon" type="image/svg+xml" sizes="any" href="icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/icon-152x152.png">
+    
+    <!-- 启动画面（iOS Safari） -->
+    <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
+    
+    <!-- 样式表 -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- PWA 安装提示样式（内联） -->
+    <style>
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            animation: slideUpPrompt 0.4s ease;
+            max-width: 90vw;
+        }
+        
+        .install-prompt.show {
+            display: flex;
+        }
+        
+        @keyframes slideUpPrompt {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        .install-prompt button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .install-prompt button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        }
+        
+        .install-prompt .close-prompt {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-size: 16px;
+            line-height: 1;
+        }
+        
+        /* 安全区域适配（iPhone X 及以上） */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            
+            .install-prompt {
+                bottom: calc(20px + env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 全宽横幅 -->
+    <script src="https://keepandroidopen.org/banner.js"></script>
+    
+    <!-- PWA 安装提示横幅 -->
+    <div class="install-prompt" id="installPrompt">
+        <span>📱 安装到主屏幕，获得更好的体验！</span>
+        <button id="installBtn">安装</button>
+        <button class="close-prompt" id="closeInstallPrompt">×</button>
+    </div>
+
+    <!-- 头部标题 -->
+    <header class="header">
+        <h1>幸运转盘</h1>
+        <p class="subtitle">让命运帮你做决定</p>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="main-container">
+        <!-- 转盘区域 -->
+        <section class="wheel-section">
+            <div class="wheel-container" id="wheelContainer">
+                <canvas id="wheelCanvas"></canvas>
+                <div class="pointer" id="pointer"></div>
+            </div>
+        </section>
+
+        <!-- 开始按钮 -->
+        <button class="spin-button" id="spinButton" disabled>
+            开始转动！
+        </button>
+
+        <!-- 控制面板 -->
+        <section class="controls-panel">
+            <!-- 选项管理 -->
+            <div class="control-group options-section">
+                <h3>选项管理</h3>
+                <div class="input-group">
+                    <input type="text" id="optionInput" placeholder="输入新选项..." maxlength="20">
+                    <button id="addOptionBtn">添加</button>
+                </div>
+                <div class="options-list" id="optionsList"></div>
+                <p class="hint-text" id="hintText">至少添加2个选项才能开始转动</p>
+            </div>
+
+            <!-- 预设模板 -->
+            <div class="control-group templates-section">
+                <h3>预设模板</h3>
+                <select id="templateSelect">
+                    <option value="">-- 选择模板 --</option>
+                    <option value="lunch">午餐选择</option>
+                    <option value="task">任务分配</option>
+                    <option value="number">数字抽奖 (1-8)</option>
+                    <option value="yesno">是/否决定</option>
+                </select>
+            </div>
+
+            <!-- 智能推荐 -->
+            <div class="control-group smart-recommend-section">
+                <h3>🔍 智能推荐</h3>
+
+                <!-- 搜索框 -->
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="输入关键词搜索，如：美食、电影、旅游...">
+                    <button id="searchBtn">搜索</button>
+                </div>
+
+                <!-- 热门分类标签 -->
+                <div class="hot-tags">
+                    <span class="tag-label">热门：</span>
+                    <button class="tag-btn" data-category="美食">🍜 美食</button>
+                    <button class="tag-btn" data-category="电影">🎬 电影</button>
+                    <button class="tag-btn" data-category="音乐">🎵 音乐</button>
+                    <button class="tag-btn" data-category="旅游">✈️ 旅游</button>
+                    <button class="tag-btn" data-category="运动">⚽ 运动</button>
+                    <button class="tag-btn" data-category="游戏">🎮 游戏</button>
+                    <button class="tag-btn" data-category="学习">📚 学习</button>
+                    <button class="tag-btn" data-category="购物">🛒 购物</button>
+                </div>
+
+                <!-- 推荐结果区域 -->
+                <div class="recommend-results" id="recommendResults">
+                    <p class="placeholder-text">输入关键词或点击热门标签获取推荐选项</p>
+                </div>
+
+                <!-- 批量操作按钮 -->
+                <div class="batch-actions" id="batchActions" style="display: none;">
+                    <button class="btn-import-all" id="importAllBtn">📥 全部导入</button>
+                    <button class="btn-clear-recommend" id="clearRecommendBtn">清空推荐</button>
+                </div>
+            </div>
+
+            <!-- 自定义设置 -->
+            <div class="control-group settings-section">
+                <h3>自定义设置</h3>
+
+                <!-- 转盘大小 -->
+                <div class="setting-item">
+                    <label for="sizeSlider">转盘大小：<span id="sizeValue">300</span>px</label>
+                    <input type="range" id="sizeSlider" min="200" max="400" value="300">
+                </div>
+
+                <!-- 配色方案 -->
+                <div class="setting-item">
+                    <label for="colorScheme">配色方案：</label>
+                    <select id="colorScheme">
+                        <option value="default">默认多彩</option>
+                        <option value="warm">暖色调</option>
+                        <option value="cool">冷色调</option>
+                        <option value="macaron">马卡龙色</option>
+                    </select>
+                </div>
+
+                <!-- 旋转时长 -->
+                <div class="setting-item">
+                    <label for="durationSlider">旋转时长：<span id="durationValue">5</span>秒</label>
+                    <input type="range" id="durationSlider" min="3" max="8" value="5" step="0.5">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 结果弹窗 -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <h2>恭喜！</h2>
+            <p class="result-text" id="resultText"></p>
+            <button class="modal-button" id="closeModalBtn">再转一次</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

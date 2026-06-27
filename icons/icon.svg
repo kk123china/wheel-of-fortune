@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- 背景渐变 -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 转盘渐变 -->
+    <linearGradient id="wheelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 阴影 -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- 背景（圆角矩形） -->
+  <rect x="0" y="0" width="512" height="512" rx="100" ry="100" fill="url(#bgGradient)"/>
+  
+  <!-- 外圈装饰 -->
+  <circle cx="256" cy="276" r="190" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.3"/>
+  
+  <!-- 转盘主体 -->
+  <circle cx="256" cy="276" r="175" fill="url(#wheelGradient)" filter="url(#shadow)"/>
+  
+  <!-- 转盘扇区 -->
+  <g transform="translate(256, 276)">
+    <!-- 扇区1 - 红色 -->
+    <path d="M 0 0 L 0 -165 A 165 165 0 0 1 143 -82.5 Z" fill="#FF6B6B" stroke="#fff" stroke-width="3"/>
+    
+    <!-- 扇区2 - 青色 -->
+    <path d="M 0 0 L 143 -82.5 A 165 165 0 0 1 143 82.5 Z" fill="#4ECDC4" stroke="#fff" stroke-width="3"/>
+    
+    <!-- 扇区3 - 黄色 -->
+    <path d="M 0 0 L 143 82.5 A 165 165 0 0 1 0 165 Z" fill="#FFEAA7" stroke="#fff" stroke-width="3"/>
+    
+    <!-- 扇区4 - 紫色 -->
+    <path d="M 0 0 L 0 165 A 165 165 0 0 1 -143 82.5 Z" fill="#DDA0DD" stroke="#fff" stroke-width="3"/>
+    
+    <!-- 扇区5 - 蓝色 -->
+    <path d="M 0 0 L -143 82.5 A 165 165 0 0 1 -143 -82.5 Z" fill="#45B7D1" stroke="#fff" stroke-width="3"/>
+    
+    <!-- 扇区6 - 绿色 -->
+    <path d="M 0 0 L -143 -82.5 A 165 165 0 0 1 0 -165 Z" fill="#96CEB4" stroke="#fff" stroke-width="3"/>
+  </g>
+  
+  <!-- 中心圆 -->
+  <circle cx="256" cy="276" r="30" fill="#ffffff" stroke="#667eea" stroke-width="4"/>
+  <circle cx="256" cy="276" r="20" fill="#667eea"/>
+  
+  <!-- 指针（三角形） -->
+  <polygon points="256,76 236,116 276,116" fill="#FFD700" filter="url(#shadow)"/>
+  <circle cx="256" cy="106" r="8" fill="#FF6B6B"/>
+  
+  <!-- 星星装饰 -->
+  <g fill="#FFD700" opacity="0.9">
+    <polygon points="80,120 85,135 100,135 88,145 92,160 80,150 68,160 72,145 60,135 75,135" transform="scale(0.8) translate(20, 20)"/>
+    <polygon points="420,140 425,155 440,155 428,165 432,180 420,170 408,180 412,165 400,155 415,155" transform="scale(0.7) translate(180, 30)"/>
+    <polygon points="100,400 105,415 120,415 108,425 112,440 100,430 88,440 92,425 80,415 95,415" transform="scale(0.6) translate(60, 100)"/>
+  </g>
+  
+  <!-- 文字 "幸运转盘" -->
+  <text x="256" y="480" font-family="'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.95">幸运转盘</text>
+</svg>

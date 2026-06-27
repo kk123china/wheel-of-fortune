@@ -1,0 +1,7 @@
+# 排除Android项目（不需要部署到GitHub Pages）
+android/
+
+# 排除开发相关文件
+.DS_Store
+*.md
+update_files.py
