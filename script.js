@@ -1,248 +1,303 @@
 /**
- * 幸运转盘 - 核心逻辑
- * 功能：Canvas转盘绘制、旋转动画、选项管理、自定义设置
+ * 幸运转盘 · Carnival Wheel
+ * 嘉年华霓虹风格增强版
  */
 
 // ==================== 配置数据 ====================
 
-// 颜色方案配置
 const colorSchemes = {
-    default: [
-        '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-        '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-        '#BB8FCE', '#85C1E9', '#F1948A', '#82E0AA'
-    ],
-    warm: [
-        '#FF6B6B', '#FF8E53', '#FFA07A', '#FFD700',
-        '#FF7F50', '#FF69B4', '#FF4500', '#FF6347',
-        '#FFA500', '#FFE4B5', '#FF1493', '#FFDAB9'
-    ],
-    cool: [
-        '#4ECDC4', '#45B7D1', '#5DADE2', '#3498DB',
-        '#85C1E9', '#AED6F1', '#BB8FCE', '#9B59B6',
-        '#82E0AA', '#58D68D', '#48C9B0', '#76D7C4'
-    ],
-    macaron: [
-        '#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9',
-        '#BAE1FF', '#E0BBE4', '#FFC8DD', '#BDE0FE',
-        '#A2D2FF', '#CDFADB', '#FFD6A5', '#FDFFB6'
-    ]
+    default:  ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9', '#F1948A', '#82E0AA'],
+    carnival: ['#ff2e93', '#ffcc33', '#00ff9d', '#00f0ff', '#b400ff', '#ff6b35', '#ff2e93', '#00f0ff', '#ffe500', '#00ff9d', '#b400ff', '#ff6b35'],
+    warm:     ['#FF6B6B', '#FF8E53', '#FFA07A', '#FFD700', '#FF7F50', '#FF69B4', '#FF4500', '#FF6347', '#FFA500', '#FFE4B5', '#FF1493', '#FFDAB9'],
+    cool:     ['#4ECDC4', '#45B7D1', '#5DADE2', '#3498DB', '#85C1E9', '#AED6F1', '#BB8FCE', '#9B59B6', '#82E0AA', '#58D68D', '#48C9B0', '#76D7C4'],
+    macaron:  ['#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9', '#BAE1FF', '#E0BBE4', '#FFC8DD', '#BDE0FE', '#A2D2FF', '#CDFADB', '#FFD6A5', '#FDFFB6'],
+    gold:     ['#FFD700', '#FFA500', '#FF8C00', '#B8860B', '#DAA520', '#CD853F', '#F4A460', '#DEB887', '#D2691E', '#8B4513', '#E0A96D', '#C9A227'],
+    rainbow:  ['#ff2e2e', '#ff8a00', '#ffe500', '#00ff3c', '#00e0ff', '#4a6bff', '#b400ff', '#ff2e93', '#ff8a00', '#ffe500', '#00ff3c', '#00e0ff'],
 };
 
-// 预设模板数据
 const templates = {
-    lunch: ['麻辣烫', '黄焖鸡', '兰州拉面', '沙县小吃', '盖浇饭', '饺子'],
-    task: ['写报告', '开会', '代码审查', '文档整理', '测试', '优化'],
-    number: ['1', '2', '3', '4', '5', '6', '7', '8'],
-    yesno: ['是', '否']
+    breakfast: ['包子', '油条豆浆', '煎饼果子', '三明治', '牛奶鸡蛋', '粥+小菜', '手抓饼', '肠粉'],
+    lunch:     ['麻辣烫', '黄焖鸡', '兰州拉面', '沙县小吃', '盖浇饭', '饺子', '汉堡', '寿司'],
+    dinner:    ['火锅', '烧烤', '日料', '西餐厅', '串串', '小龙虾', '牛排', '烤肉'],
+    date:      ['看电影', '公园散步', '咖啡厅', '逛美术馆', '逛街', '游乐园', '海边', '咖啡馆'],
+    drink:     ['奶茶', '咖啡', '果汁', '气泡水', '柠檬茶', '啤酒', '红酒', '威士忌'],
+    game:      ['王者荣耀', '原神', '和平精英', '塞尔达', '我的世界', '马里奥', '英雄联盟', 'CS2'],
+    task:      ['写报告', '开会', '代码审查', '文档整理', '测试', '优化', '学习新技术', '摸鱼'],
+    number:    ['1', '2', '3', '4', '5', '6', '7', '8'],
+    number100: ['1-25', '26-50', '51-75', '76-100', '单数', '偶数', '随机'],
+    yesno:     ['是', '否'],
+    coin:      ['正面', '反面'],
 };
 
-// ==================== 智能推荐数据库 ====================
+// 搜索关键词映射
+const keywordMappings = {
+    '吃': '美食', '喝': '饮品', '饭': '美食', '餐': '美食', '饿': '美食',
+    '看': '电影', '剧': '电影', '影': '电影',
+    '听': '音乐', '歌': '音乐', '曲': '音乐',
+    '玩': '游戏', '游': '旅游', '旅': '旅游', '景': '旅游',
+    '动': '运动', '炼': '健身',
+    '学': '学习', '读': '读书', '书': '读书',
+    '买': '购物', '购': '购物', '淘': '购物',
+};
 
 const recommendationDatabase = {
-    // 美食分类
-    '美食': [
-        '火锅', '烧烤', '寿司', '披萨', '汉堡', '炸鸡',
-        '麻辣烫', '黄焖鸡', '兰州拉面', '沙县小吃', '盖浇饭', '饺子',
-        '小笼包', '煎饼果子', '肉夹馍', '凉皮', '酸辣粉', '过桥米线',
-        '螺蛳粉', '热干面', '重庆小面', '刀削面', '烩面', 'biangbiang面',
-        '粤菜', '川菜', '湘菜', '鲁菜', '苏菜', '浙菜',
-        '闽菜', '徽菜', '东北菜', '西北菜', '云南菜', '贵州菜',
-        '韩国料理', '日本料理', '泰国菜', '越南菜', '意大利菜', '法国菜'
-    ],
-    '中餐': [
-        '宫保鸡丁', '麻婆豆腐', '糖醋里脊', '红烧肉', '回锅肉', '鱼香肉丝',
-        '水煮鱼', '酸菜鱼', '毛血旺', '口水鸡', '辣子鸡', '东坡肉',
-        '西湖醋鱼', '龙井虾仁', '叫花鸡', '狮子头', '松鼠桂鱼', '文思豆腐'
-    ],
-    '快餐': [
-        '麦当劳', '肯德基', '必胜客', '汉堡王', '赛百味', '德克士',
-        '真功夫', '吉野家', '永和大王', '李先生', '味千拉面', '大娘水饺'
-    ],
-    '饮品': [
-        '奶茶', '咖啡', '果汁', '可乐', '雪碧', '绿茶',
-        '红茶', '乌龙茶', '普洱茶', '柠檬水', '气泡水', '酸奶',
-        '星巴克', '瑞幸咖啡', '喜茶', '奈雪的茶', '蜜雪冰城', 'CoCo都可'
-    ],
-
-    // 电影分类
-    '电影': [
-        '动作片', '喜剧片', '爱情片', '科幻片', '恐怖片', '悬疑片',
-        '动画片', '纪录片', '战争片', '历史片', '奇幻片', '冒险片',
-        '复仇者联盟', '蜘蛛侠', '蝙蝠侠', '钢铁侠', '美国队长', '雷神',
-        '哈利波特', '指环王', '星球大战', '速度与激情', '变形金刚', '侏罗纪公园'
-    ],
-    ' Netflix ': [
-        '怪奇物语', '纸牌屋', '毒枭', '黑镜', '王国', '爱死机',
-        '后翼弃兵', '布里奇顿', '猎魔人', '暗黑', '心灵猎人', '曼达洛人'
-    ],
-    '国产剧': [
-        '甄嬛传', '琅琊榜', '庆余年', '陈情令', '山河令', '觉醒年代',
-        '山海情', '乔家的儿女', '人世间', '狂飙', '繁花', '漫长的季节'
-    ],
-
-    // 音乐分类
-    '音乐': [
-        '流行', '摇滚', '民谣', '爵士', '古典', '电子',
-        '嘻哈', 'R&B', '乡村', '蓝调', '金属', '朋克',
-        '周杰伦', '林俊杰', '陈奕迅', '邓紫棋', '薛之谦', '李荣浩',
-        'Taylor Swift', 'Ed Sheeran', 'Adele', 'Beyoncé', 'Bruno Mars', 'Billie Eilish'
-    ],
-    '歌手': [
-        '周杰伦', '林俊杰', '陈奕迅', '邓紫棋', '薛之谦', '李荣浩',
-        '华晨宇', '毛不易', '周深', '单依纯', 'Taylor Swift', 'Ed Sheeran'
-    ],
-
-    // 旅游分类
-    '旅游': [
-        '北京', '上海', '广州', '深圳', '成都', '杭州',
-        '西安', '重庆', '厦门', '三亚', '丽江', '大理',
-        '桂林', '张家界', '九寨沟', '黄山', '泰山', '华山',
-        '故宫', '长城', '兵马俑', '西湖', '外滩', '东方明珠'
-    ],
-    '出境游': [
-        '日本', '韩国', '泰国', '新加坡', '马来西亚', '印度尼西亚',
-        '法国', '意大利', '英国', '德国', '瑞士', '荷兰',
-        '美国', '加拿大', '澳大利亚', '新西兰', '马尔代夫', '巴厘岛'
-    ],
-    '周边游': [
-        '古镇游', '温泉度假', '农家乐', '露营', '徒步', '骑行',
-        '采摘园', '海洋馆', '动物园', '游乐园', '博物馆', '美术馆'
-    ],
-
-    // 运动分类
-    '运动': [
-        '篮球', '足球', '羽毛球', '乒乓球', '网球', '游泳',
-        '跑步', '瑜伽', '健身', '骑行', '爬山', '滑雪',
-        'NBA', 'CBA', '英超', '西甲', '意甲', '德甲',
-        '奥运会', '世界杯', '欧洲杯', 'NBA总决赛', '超级碗', 'F1赛车'
-    ],
-    '健身': [
-        '深蹲', '硬拉', '卧推', '引体向上', '俯卧撑', '仰卧起坐',
-        '平板支撑', '波比跳', '开合跳', '高抬腿', '卷腹', '臂屈伸',
-        '跑步机', '椭圆机', '划船机', '动感单车', '哑铃', '杠铃'
-    ],
-
-    // 游戏分类
-    '游戏': [
-        '王者荣耀', '和平精英', '原神', '英雄联盟', 'DOTA2', 'CS:GO',
-        '我的世界', '堡垒之夜', 'Apex英雄', '绝地求生', '穿越火线', '梦幻西游',
-        '塞尔达传说', '马里奥', '宝可梦', '动物森友会', '集合啦！动物森友会', '健身环大冒险'
-    ],
-    '主机游戏': [
-        'PS5', 'Xbox Series X', 'Switch', 'PS4', 'Xbox One', 'Steam Deck',
-        '最后生还者', '战神', '地平线', '蜘蛛侠', '对马岛之魂', '艾尔登法环'
-    ],
-    '手游': [
-        '王者荣耀', '和平精英', '原神', '阴阳师', '明日方舟', '崩坏：星穹铁道',
-        '光遇', '蛋仔派对', '金铲铲之战', '开心消消乐', '糖果传奇', '地铁跑酷'
-    ],
-
-    // 学习分类
-    '学习': [
-        '英语', '数学', '语文', '物理', '化学', '生物',
-        '历史', '地理', '政治', '编程', '设计', '音乐',
-        '考研', '考公', '考编', '雅思', '托福', 'GRE',
-        'Python', 'Java', 'JavaScript', 'C++', 'Go', 'Rust'
-    ],
-    '技能': [
-        'PPT制作', 'Excel技巧', 'PS修图', '视频剪辑', '摄影', '写作',
-        '演讲', '时间管理', '项目管理', '数据分析', 'AI工具使用', 'Prompt工程'
-    ],
-    '读书': [
-        '三体', '活着', '百年孤独', '1984', '小王子', '追风筝的人',
-        '解忧杂货店', '白夜行', '嫌疑人X的献身', '挪威的森林', '围城', '平凡的世界'
-    ],
-
-    // 购物分类
-    '购物': [
-        '淘宝', '京东', '拼多多', '天猫', '苏宁', '唯品会',
-        '优衣库', 'ZARA', 'H&M', 'GAP', '无印良品', '宜家',
-        '苹果', '华为', '小米', 'OPPO', 'vivo', '三星'
-    ],
-    '数码产品': [
-        'iPhone', 'iPad', 'MacBook', 'AirPods', 'Apple Watch', 'Surface',
-        'Switch', 'PS5', '相机', '无人机', '智能手表', '耳机'
-    ],
-
-    // 生活分类
-    '生活': [
-        '做饭', '打扫卫生', '洗衣服', '整理房间', '购物', '散步',
-        '看电影', '听音乐', '看书', '打游戏', '运动', '睡觉',
-        '约会', '聚会', '旅行', '探店', '拍照', '打卡'
-    ],
-    '周末活动': [
-        '睡懒觉', ' brunch ', '逛公园', '看电影', '逛街', '健身',
-        '烘焙', '画画', '手工DIY', '桌游', 'KTV', '密室逃脱'
-    ],
-
-    // 工作分类
-    '工作': [
-        '写代码', '写文档', '开会', '做PPT', '回复邮件', '整理文件',
-        '代码审查', '测试', '调试bug', '优化性能', '学习新技术', '写技术博客'
-    ],
-    '团队建设': [
-        '聚餐', 'KTV', '密室逃脱', '剧本杀', '户外拓展', '团建旅游',
-        '电竞比赛', '运动会', '生日会', '下午茶', '分享会', '工作坊'
-    ],
-
-    // 决策分类
-    '决定': [
-        '去做', '不做', '再想想', '问问别人', '抛硬币', '听从内心',
-        '冒险一试', '稳妥起见', '顺其自然', '随机应变', '坚持到底', '放弃吧'
-    ],
-    '心情': [
-        '开心', '难过', '愤怒', '焦虑', '平静', '兴奋',
-        '疲惫', '满足', '失落', '期待', '紧张', '放松'
-    ]
+    '美食': ['火锅', '烧烤', '寿司', '披萨', '汉堡', '炸鸡', '麻辣烫', '黄焖鸡', '兰州拉面', '沙县小吃', '小笼包', '煎饼果子'],
+    '中餐': ['宫保鸡丁', '麻婆豆腐', '糖醋里脊', '红烧肉', '回锅肉', '鱼香肉丝', '水煮鱼', '酸菜鱼'],
+    '快餐': ['麦当劳', '肯德基', '必胜客', '汉堡王', '赛百味', '德克士'],
+    '饮品': ['奶茶', '咖啡', '果汁', '可乐', '绿茶', '柠檬水', '气泡水', '酸奶'],
+    '电影': ['动作片', '喜剧片', '爱情片', '科幻片', '恐怖片', '悬疑片', '动画片'],
+    '电视剧': ['国产剧', '韩剧', '美剧', '日剧', '英剧', '泰剧'],
+    '音乐': ['流行', '摇滚', '民谣', '爵士', '古典', '电子', '嘻哈', 'R&B'],
+    '旅游': ['北京', '上海', '广州', '成都', '杭州', '西安', '重庆', '厦门', '三亚'],
+    '出境游': ['日本', '韩国', '泰国', '法国', '意大利', '英国', '美国', '马尔代夫'],
+    '运动': ['篮球', '足球', '羽毛球', '乒乓球', '网球', '游泳', '跑步', '瑜伽', '健身'],
+    '游戏': ['王者荣耀', '原神', '和平精英', '英雄联盟', 'DOTA2', '我的世界', '塞尔达', '马里奥'],
+    '学习': ['英语', '数学', '编程', '设计', '历史', '地理', '考研', '考公'],
+    '读书': ['三体', '活着', '百年孤独', '1984', '小王子', '追风筝的人', '解忧杂货店'],
+    '购物': ['淘宝', '京东', '拼多多', '天猫', '唯品会', '优衣库', 'ZARA'],
+    '生活': ['做饭', '打扫', '购物', '散步', '看电影', '听音乐', '看书', '运动', '睡觉'],
+    '周末活动': ['睡懒觉', 'brunch', '逛公园', '看电影', '逛街', '健身', '烘焙', '桌游', 'KTV'],
+    '工作': ['写代码', '写文档', '开会', '做PPT', '回复邮件', '代码审查', '测试', '学习新技术'],
+    '决定': ['去做', '不做', '再想想', '问问别人', '抛硬币', '听从内心', '冒险一试', '稳妥起见'],
+    '心情': ['开心', '难过', '愤怒', '焦虑', '平静', '兴奋', '疲惫', '放松'],
 };
 
-// 关键词映射（用于模糊匹配）
-const keywordMappings = {
-    '吃': '美食',
-    '喝': '饮品',
-    '饭': '美食',
-    '餐': '美食',
-    '食': '美食',
-    '饿': '美食',
-    '看': '电影',
-    '剧': '电影',
-    '影': '电影',
-    '视': 'Netflix ',
-    '听': '音乐',
-    '歌': '音乐',
-    '曲': '音乐',
-    '玩': '游戏',
-    '游': '旅游',
-    '旅': '旅游',
-    '景': '旅游',
-    '动': '运动',
-    '炼': '健身',
-    '学': '学习',
-    '读': '读书',
-    '书': '读书',
-    '买': '购物',
-    '购': '购物',
-    '淘': '购物',
-    '休': '生活',
-    '闲': '生活',
-    '假': '周末活动',
-    '班': '工作',
-    '职': '工作',
-    '选': '决定',
-    '择': '决定'
+// ==================== 音效系统（Web Audio API，无需外部文件）====================
+
+class SoundEngine {
+    constructor() {
+        this.enabled = false;
+        this.ctx = null;
+        this.touchStart = null;
+    }
+
+    async ensureCtx() {
+        if (!this.ctx) {
+            try {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch {
+                return null;
+            }
+        }
+        if (this.ctx.state === 'suspended') {
+            await this.ctx.resume();
+        }
+        return this.ctx;
+    }
+
+    toggle(on) {
+        this.enabled = on;
+        const btn = document.getElementById('soundToggle');
+        btn?.classList.toggle('active', on);
+        if (on) this.ensureCtx();
+    }
+
+    beep(freq, duration = 0.1, type = 'sine', gain = 0.15) {
+        if (!this.enabled) return;
+        this.ensureCtx().then(ctx => {
+            if (!ctx) return;
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            g.gain.value = 0;
+            osc.connect(g).connect(ctx.destination);
+            const now = ctx.currentTime;
+            g.gain.linearRampToValueAtTime(gain, now + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.start(now);
+            osc.stop(now + duration + 0.02);
+        });
+    }
+
+    click()    { this.beep(720, 0.06, 'square', 0.08); }
+    addOpt()   { this.beep(560, 0.08, 'triangle', 0.12); this.beep(820, 0.08, 'triangle', 0.1, Date.now() + 60); }
+    spinStart(){ this.beep(180, 0.25, 'sawtooth', 0.1); }
+    win() {
+        [523, 659, 784, 1046].forEach((f, i) => {
+            setTimeout(() => this.beep(f, 0.18, 'triangle', 0.18), i * 90);
+        });
+    }
+    pop() { this.beep(420, 0.05, 'sine', 0.1); }
+}
+
+const sound = new SoundEngine();
+
+// ==================== 撒花粒子系统 ====================
+
+class Confetti {
+    constructor(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.running = false;
+        this.enabled = true;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.canvas.style.width = window.innerWidth + 'px';
+        this.canvas.style.height = window.innerHeight + 'px';
+        this.ctx.scale(dpr, dpr);
+    }
+
+    burst(count = 120) {
+        if (!this.enabled) return;
+        const colors = ['#ff2e93', '#ffcc33', '#00ff9d', '#00f0ff', '#b400ff', '#ffe500', '#ff6b35'];
+        for (let i = 0; i < count; i++) {
+            this.particles.push({
+                x: Math.random() * window.innerWidth,
+                y: -10 - Math.random() * 100,
+                vx: (Math.random() - 0.5) * 5,
+                vy: Math.random() * 4 + 2,
+                size: Math.random() * 8 + 4,
+                rot: Math.random() * Math.PI * 2,
+                vrot: (Math.random() - 0.5) * 0.3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                life: 0,
+                maxLife: 180 + Math.random() * 120,
+            });
+        }
+        this.particles.sort(() => Math.random() - 0.5);
+        this.start();
+    }
+
+    start() {
+        if (this.running) return;
+        this.running = true;
+        this.loop();
+    }
+
+    loop() {
+        if (!this.running) return;
+        this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        let alive = 0;
+        for (const p of this.particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rot += p.vrot;
+            p.vy += 0.04; // 重力
+            p.life++;
+
+            const alpha = Math.max(0, 1 - p.life / p.maxLife);
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            this.ctx.rotate(p.rot);
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = p.color;
+            this.ctx.shadowColor = p.color;
+            this.ctx.shadowBlur = 6;
+            this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+            this.ctx.restore();
+
+            if (p.life < p.maxLife && p.y < window.innerHeight + 30) alive++;
+        }
+        this.particles = this.particles.filter(p => p.life < p.maxLife && p.y < window.innerHeight + 30);
+        if (alive === 0) { this.running = false; return; }
+        requestAnimationFrame(() => this.loop());
+    }
+}
+
+let confetti;
+
+// ==================== 历史记录 ====================
+
+const historyStore = {
+    KEY: 'wheel-history-v2',
+    MAX: 20,
+    load() {
+        try { return JSON.parse(localStorage.getItem(this.KEY)) || []; }
+        catch { return []; }
+    },
+    save(list) {
+        try { localStorage.setItem(this.KEY, JSON.stringify(list.slice(0, this.MAX))); }
+        catch {}
+    },
+    push(result) {
+        const list = this.load();
+        list.unshift({ text: result, time: Date.now() });
+        this.save(list);
+    },
+    clear() { localStorage.removeItem(this.KEY); },
 };
 
-// ==================== 转盘类 ====================
+// ==================== 历史转盘（配置快照） ====================
+// 存整个转盘的配置（options + colorScheme + spinDuration + wheelSize），最多 10 条
+const presetStore = {
+    KEY: 'wheel-presets-v1',
+    MAX: 10,
+    load() {
+        try { return JSON.parse(localStorage.getItem(this.KEY)) || []; }
+        catch { return []; }
+    },
+    save(list) {
+        const trimmed = list.slice(0, this.MAX);
+        localStorage.setItem(this.KEY, JSON.stringify(trimmed));
+    },
+    add(snapshot) {
+        const list = this.load();
+        list.unshift(snapshot);          // 最新在最前
+        this.save(list);
+    },
+    remove(id) {
+        const list = this.load().filter(s => s.id !== id);
+        this.save(list);
+    },
+    clear() { localStorage.removeItem(this.KEY); },
+};
+
+function renderHistory() {
+    const el = document.getElementById('historyList');
+    const list = historyStore.load();
+    if (list.length === 0) {
+        el.innerHTML = '<p class="placeholder-text">还没有抽奖记录</p>';
+        return;
+    }
+    el.innerHTML = list.map(item => {
+        const t = new Date(item.time);
+        const hh = String(t.getHours()).padStart(2, '0');
+        const mm = String(t.getMinutes()).padStart(2, '0');
+        const mmd = `${t.getMonth() + 1}/${t.getDate()}`;
+        return `<div class="history-item"><span class="history-name">🎲 ${escapeHtml(item.text)}</span><span class="history-time">${mmd} ${hh}:${mm}</span></div>`;
+    }).join('');
+}
+
+// ==================== 主题切换 ====================
+
+function applyTheme(theme) {
+    document.body.dataset.theme = theme;
+    localStorage.setItem('wheel-theme', theme);
+}
+
+function initTheme() {
+    const saved = localStorage.getItem('wheel-theme');
+    if (saved) {
+        applyTheme(saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+        applyTheme('light');
+    }
+    const btn = document.getElementById('themeToggle');
+    btn?.addEventListener('click', () => {
+        const next = document.body.dataset.theme === 'light' ? 'dark' : 'light';
+        applyTheme(next);
+        sound.pop();
+    });
+}
+
+// ==================== 转盘核心 ====================
 
 class Wheel {
     constructor() {
-        // DOM元素
         this.canvas = document.getElementById('wheelCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.wheelContainer = document.getElementById('wheelContainer');
+        this.frame = document.getElementById('wheelContainer');
 
-        // 状态属性
         this.options = [];
         this.currentRotation = 0;
         this.isSpinning = false;
@@ -251,909 +306,840 @@ class Wheel {
         this.spinDuration = 5;
         this.maxOptions = 12;
 
-        // 初始化
         this.init();
     }
 
     init() {
         this.setupCanvas();
         this.bindEvents();
-        this.initSmartRecommend(); // 初始化智能推荐
+        this.initRecommend();
         this.draw();
     }
 
-    // 设置Canvas尺寸
     setupCanvas() {
         const size = this.wheelSize;
         const dpr = window.devicePixelRatio || 1;
-
         this.canvas.width = size * dpr;
         this.canvas.height = size * dpr;
         this.canvas.style.width = size + 'px';
         this.canvas.style.height = size + 'px';
-
         this.ctx.scale(dpr, dpr);
         this.center = { x: size / 2, y: size / 2 };
-        this.radius = (size / 2) - 10; // 留出边距
+        this.radius = size / 2 - 12;
+
+        // 同步 frame 尺寸
+        if (this.frame) {
+            this.frame.style.width = size + 'px';
+            this.frame.style.height = size + 'px';
+        }
     }
 
-    // 绑定事件监听器
     bindEvents() {
         // 添加选项
-        document.getElementById('addOptionBtn').addEventListener('click', () => {
-            this.addOptionFromInput();
+        document.getElementById('addOptionBtn').addEventListener('click', () => this.addFromInput());
+        document.getElementById('optionInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.addFromInput();
         });
 
-        document.getElementById('optionInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.addOptionFromInput();
-            }
+        // 模板
+        document.getElementById('templateSelect').addEventListener('change', e => {
+            if (e.target.value) { this.loadTemplate(e.target.value); e.target.value = ''; }
         });
 
-        // 模板选择
-        document.getElementById('templateSelect').addEventListener('change', (e) => {
-            if (e.target.value) {
-                this.loadTemplate(e.target.value);
-                e.target.value = ''; // 重置选择
-            }
-        });
-
-        // 转盘大小调节
-        document.getElementById('sizeSlider').addEventListener('input', (e) => {
+        // 大小
+        const sizeSlider = document.getElementById('sizeSlider');
+        sizeSlider.addEventListener('input', e => {
             this.wheelSize = parseInt(e.target.value);
             document.getElementById('sizeValue').textContent = this.wheelSize;
             this.setupCanvas();
             this.draw();
+            updateRangeFill(sizeSlider);
         });
+        updateRangeFill(sizeSlider);
 
-        // 配色方案选择
-        document.getElementById('colorScheme').addEventListener('change', (e) => {
+        // 配色
+        document.getElementById('colorScheme').addEventListener('change', e => {
             this.colorScheme = e.target.value;
             this.updateColorsInList();
             this.draw();
+            sound.pop();
         });
 
-        // 旋转时长调节
-        document.getElementById('durationSlider').addEventListener('input', (e) => {
+        // 时长
+        const durationSlider = document.getElementById('durationSlider');
+        durationSlider.addEventListener('input', e => {
             this.spinDuration = parseFloat(e.target.value);
             document.getElementById('durationValue').textContent = this.spinDuration;
+            updateRangeFill(durationSlider);
         });
+        updateRangeFill(durationSlider);
 
-        // 开始转动按钮
-        document.getElementById('spinButton').addEventListener('click', () => {
-            this.spin();
-        });
+        // 开始按钮（三个入口：spinButton / centerBtn / 点击转盘画布本身）
+        const spinBtn = document.getElementById('spinButton');
+        const centerBtn = document.getElementById('spinCenterBtn');
+        const frame = document.getElementById('wheelContainer');
+        spinBtn.addEventListener('click', () => this.spin());
+        // center-btn 已设 pointer-events:none → 它下面的 canvas 接住点击
+        // 额外让整个 wheel-frame 和 canvas 都能点击触发
+        frame?.addEventListener('click', () => this.spin());
+        document.getElementById('wheelCanvas')?.addEventListener('click', () => this.spin());
 
-        // 关闭弹窗按钮
-        document.getElementById('closeModalBtn').addEventListener('click', () => {
-            this.closeModal();
-        });
-
-        // 点击遮罩关闭弹窗
-        document.getElementById('resultModal').addEventListener('click', (e) => {
-            if (e.target.id === 'resultModal') {
-                this.closeModal();
+        // 弹窗
+        document.getElementById('closeModalBtn').addEventListener('click', () => this.closeModal());
+        document.getElementById('copyResultBtn')?.addEventListener('click', () => {
+            const text = document.getElementById('resultText')?.textContent;
+            if (text) {
+                navigator.clipboard?.writeText(text).then(() => {
+                    showToast('✅ 已复制');
+                }).catch(() => {
+                    showToast('已复制：' + text);
+                });
             }
+            sound.pop();
+        });
+        document.getElementById('resultModal').addEventListener('click', e => {
+            if (e.target.id === 'resultModal') this.closeModal();
+        });
+
+        // 历史清空
+        document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+            if (confirm('确定要清空所有历史记录吗？')) {
+                historyStore.clear();
+                renderHistory();
+                showToast('历史已清空');
+                sound.pop();
+            }
+        });
+
+        // 开关
+        document.getElementById('confettiToggle').addEventListener('change', e => {
+            if (confetti) confetti.enabled = e.target.checked;
+            sound.pop();
+        });
+        document.getElementById('historyToggle').addEventListener('change', e => {
+            const panel = document.getElementById('historyPanel');
+            if (panel) panel.style.display = e.target.checked ? '' : 'none';
+            sound.pop();
+        });
+
+        // 音效
+        document.getElementById('soundToggle').addEventListener('click', () => {
+            sound.toggle(!sound.enabled);
+            if (sound.enabled) sound.click();
         });
     }
 
-    // 从输入框添加选项
-    addOptionFromInput() {
+    addFromInput() {
         const input = document.getElementById('optionInput');
         const text = input.value.trim();
-
         if (!text) return;
         if (this.options.length >= this.maxOptions) {
-            alert(`最多支持${this.maxOptions}个选项！`);
+            showToast(`最多支持 ${this.maxOptions} 个选项！`);
             return;
         }
-
         this.addOption(text);
         input.value = '';
         input.focus();
+        sound.addOpt();
     }
 
-    // 添加选项
     addOption(text) {
         if (this.isSpinning) return;
-
         this.options.push(text);
         this.renderOptionsList();
-        this.updateSpinButtonState();
+        this.updateSpinState();
         this.draw();
     }
 
-    // 删除选项
     removeOption(index) {
         if (this.isSpinning) return;
-
         this.options.splice(index, 1);
         this.renderOptionsList();
-        this.updateSpinButtonState();
+        this.updateSpinState();
         this.draw();
+        sound.pop();
     }
 
-    // 加载预设模板
-    loadTemplate(templateKey) {
+    loadTemplate(key) {
         if (this.isSpinning) return;
-        if (!templates[templateKey]) return;
-
-        this.options = [...templates[templateKey]];
+        const tpl = templates[key];
+        if (!tpl) return;
+        this.options = [...tpl];
         this.renderOptionsList();
-        this.updateSpinButtonState();
+        this.updateSpinState();
         this.draw();
+        sound.click();
+        showToast('已加载模板');
     }
 
-    // 渲染选项列表
+    // --- 保存 / 恢复 转盘配置快照 ---
+
+    saveCurrentAsPreset(name) {
+        if (this.options.length < 2) { showToast('至少需要 2 个选项才能保存'); return null; }
+        const snapshot = {
+            id: 'preset_' + Date.now(),
+            name: name || this.options[0] + (this.options.length > 1 ? ` 等${this.options.length}项` : ''),
+            createdAt: Date.now(),
+            config: {
+                options: [...this.options],
+                colorScheme: this.colorScheme,
+                spinDuration: this.spinDuration,
+                wheelSize: this.wheelSize,
+            },
+        };
+        presetStore.add(snapshot);
+        sound.click();
+        return snapshot;
+    }
+
+    applyPreset(snapshot) {
+        if (this.isSpinning) return;
+        const cfg = snapshot.config;
+        // 1. 应用配置
+        this.options = [...cfg.options];
+        this.colorScheme = cfg.colorScheme;
+        this.spinDuration = cfg.spinDuration;
+        this.wheelSize = cfg.wheelSize;
+        // 2. 同步控制面板 DOM 值
+        const sizeSlider = document.getElementById('sizeSlider');
+        const sizeValue = document.getElementById('sizeValue');
+        const durationSlider = document.getElementById('durationSlider');
+        const durationValue = document.getElementById('durationValue');
+        const colorSelect = document.getElementById('colorScheme');
+        if (sizeSlider) sizeSlider.value = this.wheelSize;
+        if (sizeValue) sizeValue.textContent = this.wheelSize;
+        if (durationSlider) durationSlider.value = this.spinDuration;
+        if (durationValue) durationValue.textContent = this.spinDuration;
+        if (colorSelect) colorSelect.value = this.colorScheme;
+        // 3. 重绘 canvas + 刷新 UI
+        this.setupCanvas();
+        this.renderOptionsList();
+        this.updateColorsInList();
+        this.updateSpinState();
+        this.draw();
+        // 4. 恢复主题（如果有）
+        if (localStorage.getItem('wheel-theme')) {
+            const theme = localStorage.getItem('wheel-theme');
+            const themeIcon = document.getElementById('themeIcon');
+            document.body.dataset.theme = theme;
+            if (themeIcon) themeIcon.innerHTML = theme === 'light'
+                ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+                : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        }
+        sound.click();
+        showToast(`已恢复「${snapshot.name}」`);
+    }
+
     renderOptionsList() {
         const listEl = document.getElementById('optionsList');
         listEl.innerHTML = '';
-
         const colors = colorSchemes[this.colorScheme];
-
-        this.options.forEach((option, index) => {
+        this.options.forEach((opt, i) => {
             const item = document.createElement('div');
             item.className = 'option-item';
             item.innerHTML = `
-                <span class="option-text">${this.escapeHtml(option)}</span>
-                <span class="option-color" style="background-color: ${colors[index % colors.length]}"></span>
-                <button class="option-delete" data-index="${index}" title="删除">×</button>
+                <span class="option-color" style="background-color:${colors[i % colors.length]}"></span>
+                <span class="option-text">${escapeHtml(opt)}</span>
+                <button class="option-delete" title="删除">✕</button>
             `;
-
-            item.querySelector('.option-delete').addEventListener('click', () => {
-                this.removeOption(index);
-            });
-
+            item.querySelector('.option-delete').addEventListener('click', () => this.removeOption(i));
             listEl.appendChild(item);
         });
     }
 
-    // 更新列表中的颜色显示
     updateColorsInList() {
         const colors = colorSchemes[this.colorScheme];
-        const colorElements = document.querySelectorAll('.option-color');
-
-        colorElements.forEach((el, index) => {
-            el.style.backgroundColor = colors[index % colors.length];
+        document.querySelectorAll('.option-color').forEach((el, i) => {
+            el.style.backgroundColor = colors[i % colors.length];
         });
     }
 
-    // 更新开始按钮状态
-    updateSpinButtonState() {
+    updateSpinState() {
         const btn = document.getElementById('spinButton');
         const hint = document.getElementById('hintText');
-
-        if (this.options.length >= 2 && !this.isSpinning) {
-            btn.disabled = false;
-            hint.classList.add('hidden');
-        } else {
-            btn.disabled = true;
-            hint.classList.remove('hidden');
-        }
+        const center = document.getElementById('spinCenterBtn');
+        const ready = this.options.length >= 2 && !this.isSpinning;
+        btn.disabled = !ready;
+        if (center) center.disabled = !ready;
+        hint?.classList.toggle('hidden', ready);
     }
 
-    // 绘制转盘
+    // --- 绘制 ---
     draw() {
         const ctx = this.ctx;
-        const centerX = this.center.x;
-        const centerY = this.center.y;
-        const radius = this.radius;
-
-        // 清空画布
+        const cx = this.center.x, cy = this.center.y, r = this.radius;
         ctx.clearRect(0, 0, this.wheelSize, this.wheelSize);
 
-        // 如果没有选项，绘制空转盘提示
         if (this.options.length === 0) {
             ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#f0f0f0';
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(30, 20, 55, 0.5)';
             ctx.fill();
-
-            ctx.font = '16px -apple-system, sans-serif';
-            ctx.fillStyle = '#999';
+            ctx.strokeStyle = 'rgba(255, 46, 147, 0.35)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.font = '15px "Noto Sans SC", sans-serif';
+            ctx.fillStyle = 'rgba(180, 170, 210, 0.7)';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('请添加选项', centerX, centerY);
+            ctx.fillText('请添加选项', cx, cy);
             return;
         }
 
-        // 获取颜色方案
         const colors = colorSchemes[this.colorScheme];
-        const sliceAngle = (Math.PI * 2) / this.options.length;
+        const slice = (Math.PI * 2) / this.options.length;
 
-        // 绘制每个扇区
-        this.options.forEach((option, index) => {
-            const startAngle = index * sliceAngle - Math.PI / 2;
-            const endAngle = startAngle + sliceAngle;
+        this.options.forEach((opt, i) => {
+            const start = i * slice - Math.PI / 2;
+            const end = start + slice;
 
-            // 绘制扇形
             ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, start, end);
             ctx.closePath();
-
-            // 填充颜色
-            ctx.fillStyle = colors[index % colors.length];
+            ctx.fillStyle = colors[i % colors.length];
             ctx.fill();
 
-            // 绘制边框
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            // 扇区外发光（嘉年华效果）
+            ctx.save();
+            ctx.shadowColor = colors[i % colors.length];
+            ctx.shadowBlur = 14;
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
             ctx.lineWidth = 2;
             ctx.stroke();
+            ctx.restore();
 
-            // 绘制文字
-            this.drawText(option, index, sliceAngle, centerX, centerY, radius);
+            this.drawText(opt, i, slice, cx, cy, r, colors[i % colors.length]);
         });
 
-        // 绘制中心圆（装饰）
+        // 中心装饰环
         ctx.beginPath();
-        ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(10, 5, 25, 0.95)';
         ctx.fill();
-        ctx.strokeStyle = '#667eea';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-    }
-
-    // 绘制扇区文字
-    drawText(text, index, sliceAngle, centerX, centerY, radius) {
-        const ctx = this.ctx;
-
-        // 计算文字位置（扇区中间）
-        const textAngle = index * sliceAngle + sliceAngle / 2 - Math.PI / 2;
-        const textRadius = radius * 0.65; // 文字距离中心的距离
-        const textX = centerX + Math.cos(textAngle) * textRadius;
-        const textY = centerY + Math.sin(textAngle) * textRadius;
-
-        // 设置字体样式
-        const fontSize = this.calculateFontSize(this.options.length);
-        ctx.font = `bold ${fontSize}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        // 处理文字过长的情况
-        let displayText = text;
-        const maxWidth = (sliceAngle * radius * 0.9);
-        while (ctx.measureText(displayText).width > maxWidth && displayText.length > 2) {
-            displayText = displayText.slice(0, -1);
-        }
-        if (displayText !== text) {
-            displayText += '..';
-        }
-
-        // 保存状态并旋转文字使其易于阅读
         ctx.save();
-        ctx.translate(textX, textY);
-
-        // 让文字沿着半径方向排列
-        const rotation = textAngle + Math.PI / 2;
-        if (rotation > Math.PI / 2 && rotation < Math.PI * 1.5) {
-            // 下半部分的文字翻转180度，保持可读性
-            ctx.rotate(rotation + Math.PI);
-        } else {
-            ctx.rotate(rotation);
-        }
-
-        // 添加文字阴影效果
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-        ctx.shadowBlur = 3;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-
-        ctx.fillText(displayText, 0, 0);
+        ctx.strokeStyle = '#ffcc33';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#ffcc33';
+        ctx.shadowBlur = 12;
+        ctx.stroke();
         ctx.restore();
     }
 
-    // 计算字体大小（根据选项数量动态调整）
-    calculateFontSize(optionCount) {
-        if (optionCount <= 4) return 18;
-        if (optionCount <= 6) return 15;
-        if (optionCount <= 8) return 13;
-        if (optionCount <= 10) return 11;
+    drawText(text, i, slice, cx, cy, r, color) {
+        const ctx = this.ctx;
+        const fontSize = this.calcFontSize(this.options.length);
+        ctx.font = `bold ${fontSize}px "Noto Sans SC", sans-serif`;
+
+        // 根据扇区颜色选择文字色
+        const lum = hexLuminance(color);
+        ctx.fillStyle = lum > 0.5 ? '#1a0b2e' : '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = 2;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // 扇区的起止角
+        const startAngle = i * slice - Math.PI / 2;
+        const endAngle = startAngle + slice;
+        // 文字所在半径 —— 推到更外圈，避开中心 GO 按钮
+        const textR = r * 0.78;
+
+        // 计算文字是否需要截断
+        let display = text;
+        const maxW = slice * textR * 0.82; // 弧度 × 半径 ≈ 最大弧长，留 18% 余量
+        while (ctx.measureText(display).width > maxW && display.length > 2) {
+            display = display.slice(0, -1);
+        }
+        if (display !== text) display = display.slice(0, Math.max(1, display.length - 1)) + '…';
+
+        const chars = [...display];
+        const total = chars.length;
+        if (total === 0) return;
+
+        // 字符均匀分布在扇区弧线上，留 12% 的首尾留白
+        const padFrac = total === 1 ? 0 : 0.12;
+        const arcStart = startAngle + slice * padFrac;
+        const arcEnd = endAngle - slice * padFrac;
+
+        chars.forEach((ch, idx) => {
+            // 中间对齐：如果 3 个字符，idx 分别落在 0.25 / 0.5 / 0.75 位置
+            const t = total === 1 ? 0.5 : (idx + 0.5) / total;
+            const angle = arcStart + (arcEnd - arcStart) * t;
+            const tx = cx + Math.cos(angle) * textR;
+            const ty = cy + Math.sin(angle) * textR;
+
+            ctx.save();
+            ctx.translate(tx, ty);
+            // 切向：垂直方向指向圆心（让字头朝转盘外、脚朝圆心）
+            let rot = angle + Math.PI / 2;
+            // 下方扇区（右下到左下）翻转 180°，避免倒字
+            if (rot > Math.PI / 2 && rot < Math.PI * 1.5) rot += Math.PI;
+            ctx.rotate(rot);
+            ctx.fillText(ch, 0, 0);
+            ctx.restore();
+        });
+    }
+
+    calcFontSize(n) {
+        if (n <= 4) return 18;
+        if (n <= 6) return 15;
+        if (n <= 8) return 13;
+        if (n <= 10) return 11;
         return 10;
     }
 
-    // 开始旋转
+    // --- 旋转 ---
     spin() {
         if (this.isSpinning || this.options.length < 2) return;
 
         this.isSpinning = true;
+        const btn = document.getElementById('spinButton');
+        const center = document.getElementById('spinCenterBtn');
+        btn.disabled = true;
+        btn.classList.add('spinning');
+        btn.querySelector('.spin-text').textContent = '转动中...';
+        if (center) center.disabled = true;
 
-        // 更新UI状态
-        const spinBtn = document.getElementById('spinButton');
-        spinBtn.disabled = true;
-        spinBtn.classList.add('spinning');
-        spinBtn.textContent = '转动中...';
+        const spins = 3 + Math.floor(Math.random() * 6);
+        const offset = Math.random() * 360;
+        const total = spins * 360 + offset;
+        this.currentRotation += total;
 
-        // 禁用所有控制
-        this.setControlsEnabled(false);
-
-        // 生成随机角度
-        const spins = 3 + Math.floor(Math.random() * 6); // 3-8圈
-        const randomOffset = Math.random() * 360;       // 随机偏移
-        const totalRotation = spins * 360 + randomOffset;
-
-        // 更新当前旋转角度
-        this.currentRotation += totalRotation;
-
-        // 应用CSS变换和动画
         this.canvas.style.transition = `transform ${this.spinDuration}s cubic-bezier(0.17, 0.67, 0.12, 0.99)`;
         this.canvas.style.transform = `rotate(${this.currentRotation}deg)`;
 
-        // 监听动画结束
-        setTimeout(() => {
-            this.onSpinComplete();
-        }, this.spinDuration * 1000 + 100); // 额外100ms确保动画完成
+        sound.spinStart();
+
+        setTimeout(() => this.onComplete(), this.spinDuration * 1000 + 120);
     }
 
-    // 旋转完成处理
-    onSpinComplete() {
-        // 计算最终选中的索引
-        const normalizedAngle = this.currentRotation % 360;
-        const sliceAngle = 360 / this.options.length;
+    onComplete() {
+        const norm = this.currentRotation % 360;
+        const slice = 360 / this.options.length;
+        const pointerAngle = 360 - norm;
+        const idx = Math.floor(pointerAngle / slice) % this.options.length;
+        const result = this.options[idx];
 
-        // 指针在顶部（270度或-90度），需要计算哪个扇区指向指针
-        // 由于canvas的rotate是顺时针，我们需要反向计算
-        const pointerAngle = 360 - normalizedAngle; // 指针相对于转盘的角度
-        const selectedIndex = Math.floor(pointerAngle / sliceAngle) % this.options.length;
+        // 历史
+        if (document.getElementById('historyToggle')?.checked !== false) {
+            historyStore.push(result);
+            renderHistory();
+        }
 
-        // 显示结果
-        this.showResult(this.options[selectedIndex]);
+        // 撒花
+        if (confetti && confetti.enabled) confetti.burst(150);
 
-        // 重置状态
+        // 弹窗 + 音效
+        this.showResult(result);
+        sound.win();
+
+        // 按钮复位
+        const btn = document.getElementById('spinButton');
+        const center = document.getElementById('spinCenterBtn');
+        btn.classList.remove('spinning');
+        btn.querySelector('.spin-text').textContent = '再转一次';
         this.isSpinning = false;
-
-        // 更新UI状态
-        const spinBtn = document.getElementById('spinButton');
-        spinBtn.classList.remove('spinning');
-        spinBtn.textContent = '再转一次';
-        spinBtn.disabled = false;
-
-        // 启用控制
-        this.setControlsEnabled(true);
+        this.updateSpinState();
     }
 
-    // 显示结果弹窗
     showResult(result) {
         document.getElementById('resultText').textContent = result;
         document.getElementById('resultModal').classList.add('show');
     }
 
-    // 关闭结果弹窗
     closeModal() {
         document.getElementById('resultModal').classList.remove('show');
     }
 
-    // 启用/禁用控制面板
-    setControlsEnabled(enabled) {
-        document.getElementById('optionInput').disabled = !enabled;
-        document.getElementById('addOptionBtn').disabled = !enabled;
-        document.getElementById('templateSelect').disabled = !enabled;
-        document.getElementById('sizeSlider').disabled = !enabled;
-        document.getElementById('colorScheme').disabled = !enabled;
-        document.getElementById('durationSlider').disabled = !enabled;
-
-        // 删除按钮的状态
-        const deleteButtons = document.querySelectorAll('.option-delete');
-        deleteButtons.forEach(btn => {
-            btn.disabled = !enabled;
-            btn.style.opacity = enabled ? '1' : '0.5';
-        });
-    }
-
-    // HTML转义（防止XSS）
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // ==================== 智能推荐功能 ====================
-
-    // 初始化智能推荐事件绑定
-    initSmartRecommend() {
+    // --- 推荐 ---
+    initRecommend() {
         const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
+        document.getElementById('searchBtn').addEventListener('click', () => this.performSearch());
+        searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') this.performSearch(); });
 
-        // 搜索按钮点击
-        searchBtn.addEventListener('click', () => {
-            this.performSearch();
-        });
-
-        // 回车键搜索
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.performSearch();
-            }
-        });
-
-        // 热门标签点击
         document.querySelectorAll('.tag-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const category = btn.dataset.category;
-                this.loadCategoryRecommendations(category);
+                const cat = btn.dataset.category;
+                this.loadCategory(cat);
+                sound.click();
             });
         });
 
-        // 全部导入按钮
-        document.getElementById('importAllBtn').addEventListener('click', () => {
-            this.importAllRecommendations();
-        });
-
-        // 清空推荐按钮
-        document.getElementById('clearRecommendBtn').addEventListener('click', () => {
-            this.clearRecommendations();
-        });
+        document.getElementById('importAllBtn').addEventListener('click', () => this.importAll());
+        document.getElementById('clearRecommendBtn').addEventListener('click', () => this.clearRec());
     }
 
-    // 执行搜索
     performSearch() {
-        const searchInput = document.getElementById('searchInput');
-        const keyword = searchInput.value.trim();
-
-        if (!keyword) {
-            this.showRecommendPlaceholder('请输入搜索关键词');
-            return;
-        }
-
-        // 显示加载状态
-        this.showSearchLoading();
-
-        // 模拟网络延迟（实际应用中这里可以调用真实的API）
-        setTimeout(() => {
-            const results = this.searchRecommendations(keyword);
-            this.displayRecommendations(results, keyword);
-        }, 500);
-    }
-
-    // 搜索推荐选项
-    searchRecommendations(keyword) {
-        const results = [];
-        const keywordLower = keyword.toLowerCase();
-
-        // 1. 精确匹配分类
-        if (recommendationDatabase[keyword]) {
-            results.push(...recommendationDatabase[keyword]);
-        }
-
-        // 2. 关键词模糊匹配
-        for (const [key, value] of Object.entries(keywordMappings)) {
-            if (keywordLower.includes(key)) {
-                const category = keywordMappings[key];
-                if (recommendationDatabase[category]) {
-                    recommendationDatabase[category].forEach(item => {
-                        if (!results.includes(item)) {
-                            results.push(item);
-                        }
-                    });
-                }
-            }
-        }
-
-        // 3. 在所有分类中模糊搜索包含关键词的项
-        for (const [category, items] of Object.entries(recommendationDatabase)) {
-            items.forEach(item => {
-                if (item.toLowerCase().includes(keywordLower) && !results.includes(item)) {
-                    results.push(item);
-                }
-            });
-        }
-
-        // 4. 如果本地没有结果，生成一些基于关键词的创意建议
-        if (results.length === 0) {
-            results.push(
-                `${keyword}方案A`,
-                `${keyword}方案B`,
-                `${keyword}方案C`,
-                `${keyword}备选1`,
-                `${keyword}备选2`,
-                `关于${keyword}的其他选择`
-            );
-        }
-
-        // 去重并限制数量
-        const uniqueResults = [...new Set(results)];
-        return uniqueResults.slice(0, 12); // 最多显示12个推荐
-    }
-
-    // 加载分类推荐
-    loadCategoryRecommendations(category) {
-        // 显示加载状态
-        this.showSearchLoading();
-
-        // 模拟延迟
-        setTimeout(() => {
-            if (recommendationDatabase[category]) {
-                const results = [...recommendationDatabase[category]].slice(0, 12);
-                this.displayRecommendations(results, category);
-            } else {
-                this.showNoResults();
-            }
-        }, 300);
-
-        // 更新搜索框内容
-        document.getElementById('searchInput').value = category;
-    }
-
-    // 显示推荐结果
-    displayRecommendations(results, keyword) {
-        const container = document.getElementById('recommendResults');
-        const batchActions = document.getElementById('batchActions');
-
-        if (results.length === 0) {
-            this.showNoResults();
-            return;
-        }
-
-        // 清空容器
-        container.innerHTML = '';
-
-        // 创建推荐项
-        results.forEach((item, index) => {
-            const recommendItem = document.createElement('div');
-            recommendItem.className = 'recommend-item';
-            recommendItem.style.animationDelay = `${index * 0.05}s`;
-
-            // 检查是否已添加
-            const isAlreadyAdded = this.options.includes(item);
-
-            recommendItem.innerHTML = `
-                <span class="recommend-item-text">${this.escapeHtml(item)}</span>
-                <button class="recommend-item-add ${isAlreadyAdded ? 'added' : ''}"
-                        data-item="${this.escapeHtml(item)}">
-                    ${isAlreadyAdded ? '已添加' : '+ 添加'}
-                </button>
-            `;
-
-            // 绑定添加事件
-            const addBtn = recommendItem.querySelector('.recommend-item-add');
-            addBtn.addEventListener('click', () => {
-                this.addSingleRecommendation(item, addBtn);
-            });
-
-            container.appendChild(recommendItem);
-        });
-
-        // 显示批量操作按钮
-        batchActions.style.display = 'flex';
-    }
-
-    // 添加单个推荐项
-    addSingleRecommendation(item, button) {
-        if (this.options.length >= this.maxOptions) {
-            alert(`最多支持${this.maxOptions}个选项！`);
-            return;
-        }
-
-        if (this.options.includes(item)) {
-            alert('该选项已存在！');
-            return;
-        }
-
-        // 添加到转盘
-        this.addOption(item);
-
-        // 更新按钮状态
-        button.textContent = '已添加';
-        button.classList.add('added');
-        button.disabled = true;
-
-        // 添加成功动画
-        button.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-            button.style.transform = 'scale(1)';
-        }, 200);
-    }
-
-    // 导入全部推荐
-    importAllRecommendations() {
-        const items = document.querySelectorAll('.recommend-item');
-        let importedCount = 0;
-
-        items.forEach(itemEl => {
-            const itemText = itemEl.querySelector('.recommend-item-text').textContent;
-            const addButton = itemEl.querySelector('.recommend-item-add');
-
-            if (!this.options.includes(itemText) && this.options.length < this.maxOptions) {
-                this.addOption(itemText);
-                addButton.textContent = '已添加';
-                addButton.classList.add('added');
-                addButton.disabled = true;
-                importedCount++;
-            }
-        });
-
-        if (importedCount > 0) {
-            // 显示导入成功提示
-            this.showToast(`✅ 成功导入 ${importedCount} 个选项！`);
-        } else {
-            alert('没有可导入的新选项或已达到最大限制！');
-        }
-    }
-
-    // 清空推荐
-    clearRecommendations() {
-        const container = document.getElementById('recommendResults');
-        const batchActions = document.getElementById('batchActions');
-        const searchInput = document.getElementById('searchInput');
-
-        container.innerHTML = '<p class="placeholder-text">输入关键词或点击热门标签获取推荐选项</p>';
-        batchActions.style.display = 'none';
-        searchInput.value = '';
-    }
-
-    // 显示加载状态
-    showSearchLoading() {
+        const input = document.getElementById('searchInput');
+        const kw = input.value.trim();
+        if (!kw) { showRecPlaceholder('请输入搜索关键词'); return; }
         const container = document.getElementById('recommendResults');
         container.innerHTML = '<p class="search-loading">正在搜索中</p>';
-        document.getElementById('batchActions').style.display = 'none';
-    }
-
-    // 显示占位符文本
-    showRecommendPlaceholder(text) {
-        const container = document.getElementById('recommendResults');
-        container.innerHTML = `<p class="placeholder-text">${text}</p>`;
-        document.getElementById('batchActions').style.display = 'none';
-    }
-
-    // 显示无结果提示
-    showNoResults() {
-        const container = document.getElementById('recommendResults');
-        container.innerHTML = '<p class="no-results">未找到相关推荐，请尝试其他关键词</p>';
-        document.getElementById('batchActions').style.display = 'none';
-    }
-
-    // 显示Toast提示
-    showToast(message) {
-        // 移除已有的toast
-        const existingToast = document.querySelector('.toast-notification');
-        if (existingToast) {
-            existingToast.remove();
-        }
-
-        // 创建新的toast
-        const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
-            z-index: 10000;
-            animation: toastSlideIn 0.3s ease, toastFadeOut 0.3s ease 2.7s;
-            font-weight: 600;
-            font-size: 14px;
-        `;
-
-        document.body.appendChild(toast);
-
-        // 3秒后自动移除
         setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
+            const results = this.searchKw(kw);
+            this.displayResults(results);
+        }, 400);
+        sound.click();
+    }
+
+    searchKw(kw) {
+        const results = new Set();
+        if (recommendationDatabase[kw]) recommendationDatabase[kw].forEach(x => results.add(x));
+        for (const [k, v] of Object.entries(keywordMappings)) {
+            if (kw.includes(k) && recommendationDatabase[v]) {
+                recommendationDatabase[v].forEach(x => results.add(x));
             }
-        }, 3000);
+        }
+        for (const [, items] of Object.entries(recommendationDatabase)) {
+            items.forEach(it => { if (it.toLowerCase().includes(kw.toLowerCase())) results.add(it); });
+        }
+        if (results.size === 0) {
+            [`${kw}方案A`, `${kw}方案B`, `${kw}方案C`, `${kw}备选1`, `${kw}备选2`].forEach(x => results.add(x));
+        }
+        return [...results].slice(0, 12);
+    }
+
+    loadCategory(cat) {
+        const container = document.getElementById('recommendResults');
+        container.innerHTML = '<p class="search-loading">加载中</p>';
+        setTimeout(() => {
+            if (recommendationDatabase[cat]) {
+                this.displayResults(recommendationDatabase[cat].slice(0, 12));
+            } else {
+                showRecPlaceholder('未找到该分类');
+            }
+        }, 300);
+        document.getElementById('searchInput').value = cat;
+    }
+
+    displayResults(results) {
+        const container = document.getElementById('recommendResults');
+        const batch = document.getElementById('batchActions');
+        if (!results || results.length === 0) { showNoResults(); return; }
+        container.innerHTML = '';
+        results.forEach((item, i) => {
+            const added = this.options.includes(item);
+            const row = document.createElement('div');
+            row.className = 'recommend-item';
+            row.style.animationDelay = `${i * 0.04}s`;
+            row.innerHTML = `
+                <span class="recommend-item-text">${escapeHtml(item)}</span>
+                <button class="recommend-item-add ${added ? 'added' : ''}">${added ? '已添加' : '+ 添加'}</button>
+            `;
+            const btn = row.querySelector('.recommend-item-add');
+            btn.addEventListener('click', () => {
+                if (added || this.isSpinning) return;
+                if (this.options.length >= this.maxOptions) { showToast(`最多 ${this.maxOptions} 个选项`); return; }
+                this.addOption(item);
+                btn.textContent = '已添加';
+                btn.classList.add('added');
+                sound.pop();
+            });
+            container.appendChild(row);
+        });
+        batch.style.display = 'flex';
+    }
+
+    importAll() {
+        const rows = document.querySelectorAll('.recommend-item');
+        let count = 0;
+        rows.forEach(row => {
+            const text = row.querySelector('.recommend-item-text').textContent;
+            const btn = row.querySelector('.recommend-item-add');
+            if (!this.options.includes(text) && this.options.length < this.maxOptions && !this.isSpinning) {
+                this.addOption(text);
+                btn.textContent = '已添加';
+                btn.classList.add('added');
+                count++;
+            }
+        });
+        showToast(count > 0 ? `✅ 导入 ${count} 个选项` : '没有新选项可导入');
+        sound.pop();
+    }
+
+    clearRec() {
+        document.getElementById('recommendResults').innerHTML =
+            '<p class="placeholder-text">点热门标签或输入关键词</p>';
+        document.getElementById('batchActions').style.display = 'none';
+        document.getElementById('searchInput').value = '';
+        sound.pop();
     }
 }
 
-// ==================== 初始化应用 ====================
+function showRecPlaceholder(t) {
+    document.getElementById('recommendResults').innerHTML = `<p class="placeholder-text">${t}</p>`;
+    document.getElementById('batchActions').style.display = 'none';
+}
+function showNoResults() { showRecPlaceholder('未找到，请换个关键词试试'); }
+
+// ==================== 工具函数 ====================
+
+/** 给 range 滑块的轨道填上从左到右的霓虹渐变，表示当前进度 */
+function updateRangeFill(el) {
+    if (!el) return;
+    const min = parseFloat(el.min) || 0;
+    const max = parseFloat(el.max) || 100;
+    const val = parseFloat(el.value);
+    const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
+    el.style.background =
+        `linear-gradient(90deg, #ff2e93 0%, #b400ff ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+function hexLuminance(hex) {
+    const h = hex.replace('#', '');
+    const r = parseInt(h.substr(0, 2), 16) / 255;
+    const g = parseInt(h.substr(2, 2), 16) / 255;
+    const b = parseInt(h.substr(4, 2), 16) / 255;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+// Toast 通知
+let toastTimer = null;
+function showToast(msg) {
+    let toast = document.querySelector('.toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.style.cssText = `
+            position: fixed; top: 20px; right: 50%; transform: translateX(50%);
+            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            color: white; padding: 12px 22px; border-radius: 50px;
+            z-index: 2000; font-weight: 700; font-size: 14px; letter-spacing: 1px;
+            box-shadow: var(--glow-pink); animation: fadeIn 0.3s ease;
+            pointer-events: none;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+}
+
+// ==================== 应用初始化 ====================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 创建转盘实例
+    confetti = new Confetti('confettiCanvas');
+    initTheme();
+
+    // 把 banner.js 注入的横幅强制挪到底部、全宽、不裁内容
+    // banner.js 会给自己注入 <style> 规则（含 width:579px），比普通 !important 还难覆盖
+    // 最稳方案：直接 setAttribute('style', ...!important) 写死整串内联样式
+    const FIX_BANNER_STYLE = [
+        'position: fixed !important',
+        'bottom: 0 !important',
+        'top: auto !important',
+        'left: 0 !important',
+        'right: 0 !important',
+        'width: 100vw !important',
+        'min-width: 100vw !important',
+        'max-width: none !important',
+        'height: auto !important',
+        'max-height: none !important',
+        'min-height: 0 !important',
+        'transform: none !important',
+        'overflow: visible !important',
+        'z-index: 5 !important',
+        'font-size: 12px !important',
+        'line-height: 1.3 !important',
+        'padding: 6px 14px !important',
+        'box-sizing: border-box !important',
+        'text-align: center !important',
+    ].join('; ');
+    const fixBanner = () => {
+        const b = document.querySelector('.kao-banner') || document.querySelector('[class*="banner"]');
+        if (!b) return false;
+        b.setAttribute('style', FIX_BANNER_STYLE);
+        // 子元素也清掉 banner.js 可能写的 width 限制
+        for (const child of b.children) {
+            child.style.width = 'auto';
+            child.style.maxWidth = 'none';
+            child.style.fontSize = 'inherit';
+        }
+        return true;
+    };
+    if (!fixBanner()) {
+        const mo = new MutationObserver(() => { if (fixBanner()) mo.disconnect(); });
+        mo.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => mo.disconnect(), 3000);
+    }
+
+    // 音效默认开启（需要用户交互才能启动 AudioContext）
+    document.getElementById('soundToggle').classList.add('active');
+    sound.toggle(true);
+    // 用户第一次交互时激活
+    const activateOnFirst = () => {
+        sound.ensureCtx();
+        document.removeEventListener('click', activateOnFirst);
+        document.removeEventListener('keydown', activateOnFirst);
+        document.removeEventListener('touchstart', activateOnFirst);
+    };
+    document.addEventListener('click', activateOnFirst);
+    document.addEventListener('keydown', activateOnFirst);
+    document.addEventListener('touchstart', activateOnFirst);
+
+    // 创建转盘
     const wheel = new Wheel();
 
-    // 注册 Service Worker
-    registerServiceWorker();
+    // ==================== 菜单抽屉系统 ====================
+    const menuBtn = document.getElementById('menuBtn');
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    const drawerPanel = document.getElementById('drawerPanel');
+    const drawerClose = document.getElementById('drawerClose');
+    const presetList = document.getElementById('presetList');
+    const presetEmpty = document.getElementById('presetEmpty');
+    const presetCount = document.getElementById('presetCount');
+    const saveCurrentBtn = document.getElementById('saveCurrentBtn');
 
-    // 初始化 PWA 安装提示
-    initPWAPrompt();
-
-    // 响应窗口大小变化
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            wheel.setupCanvas();
-            wheel.draw();
-        }, 250);
-    });
-
-    // 触摸设备优化：防止双击缩放
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', (e) => {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
-
-    // 检测是否从模板快捷方式打开
-    const urlParams = new URLSearchParams(window.location.search);
-    const templateParam = urlParams.get('template');
-    if (templateParam && templates[templateParam]) {
-        wheel.loadTemplate(templateParam);
-    }
-
-    console.log('幸运转盘已初始化！');
-});
-
-// ==================== PWA 功能 ====================
-
-// 注册 Service Worker
-async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            console.log('[PWA] Service Worker 注册成功:', registration.scope);
-
-            // 检查更新
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // 新版本可用，提示用户刷新
-                        showUpdateNotification();
-                    }
-                });
-            });
-        } catch (error) {
-            console.error('[PWA] Service Worker 注册失败:', error);
-        }
-    }
-}
-
-// PWA 安装提示
-let deferredPrompt;
-
-function initPWAPrompt() {
-    const installPrompt = document.getElementById('installPrompt');
-    const installBtn = document.getElementById('installBtn');
-    const closeBtn = document.getElementById('closeInstallPrompt');
-
-    // 监听 beforeinstallprompt 事件
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-
-        // 检查用户之前是否已经安装或关闭过提示
-        const isDismissed = localStorage.getItem('pwa-install-dismissed');
-        const isInstalled = localStorage.getItem('pwa-installed');
-
-        if (!isDismissed && !isInstalled) {
-            // 延迟显示安装提示（让用户先体验一下）
-            setTimeout(() => {
-                installPrompt.classList.add('show');
-            }, 3000); // 3秒后显示
-        }
-    });
-
-    // 监听安装成功事件
-    window.addEventListener('appinstalled', () => {
-        console.log('[PWA] 应用已安装到主屏幕');
-        localStorage.setItem('pwa-installed', 'true');
-        installPrompt.classList.remove('show');
-        deferredPrompt = null;
-
-        // 显示安装成功提示
-        showToastMessage('✅ 已成功安装到主屏幕！', 'success');
-    });
-
-    // 安装按钮点击
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log('[PWA] 用户安装选择:', outcome);
-            deferredPrompt = null;
-        }
-        installPrompt.classList.remove('show');
-    });
-
-    // 关闭按钮点击
-    closeBtn.addEventListener('click', () => {
-        installPrompt.classList.remove('show');
-        localStorage.setItem('pwa-install-dismissed', 'true');
-
-        // 7天后再次提示（可选）
-        setTimeout(() => {
-            localStorage.removeItem('pwa-install-dismissed');
-        }, 7 * 24 * 60 * 60 * 1000);
-    });
-}
-
-// 显示更新通知
-function showUpdateNotification() {
-    const notification = document.createElement('div');
-    notification.className = 'update-notification';
-    notification.innerHTML = `
-        <span>🔄 发现新版本，点击刷新获取最新功能</span>
-        <button onclick="location.reload()">立即更新</button>
-    `;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-        padding: 15px 25px;
-        border-radius: 50px;
-        box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        font-weight: 600;
-        animation: slideDown 0.4s ease;
-    `;
-
-    // 添加动画样式
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateX(-50%) translateY(-50px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        .update-notification button {
-            background: white;
-            color: #11998e;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-    `;
-    document.head.appendChild(style);
-    document.body.appendChild(notification);
-
-    // 10秒后自动消失
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 10000);
-}
-
-// Toast 消息（全局）
-function showToastMessage(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.textContent = message;
-    
-    const colors = {
-        success: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-        error: 'linear-gradient(135deg, #eb3349 0%, #f45c43 100%)',
-        info: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    // 打开抽屉
+    const openDrawer = () => {
+        drawerPanel.hidden = false;
+        requestAnimationFrame(() => {
+            drawerOverlay.classList.add('open');
+            drawerPanel.classList.add('open');
+            drawerPanel.setAttribute('aria-hidden', 'false');
+            menuBtn.classList.add('active');
+            menuBtn.setAttribute('aria-expanded', 'true');
+        });
+        document.body.style.overflow = 'hidden';
+        renderPresets();
     };
 
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${colors[type]};
-        color: white;
-        padding: 15px 25px;
-        border-radius: 10px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        z-index: 10000;
-        animation: toastSlideIn 0.3s ease, toastFadeOut 0.3s ease 2.7s;
-        font-weight: 600;
-        font-size: 14px;
-        max-width: 80vw;
-    `;
+    // 关闭抽屉
+    const closeDrawer = () => {
+        drawerOverlay.classList.remove('open');
+        drawerPanel.classList.remove('open');
+        menuBtn.classList.remove('active');
+        menuBtn.setAttribute('aria-expanded', 'false');
+        drawerPanel.setAttribute('aria-hidden', 'true');
+        setTimeout(() => { drawerPanel.hidden = true; drawerOverlay.classList.remove('open'); }, 350);
+        document.body.style.overflow = '';
+    };
 
-    document.body.appendChild(toast);
+    // ESC 关闭
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && drawerPanel.classList.contains('open')) closeDrawer();
+    });
 
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.remove();
+    menuBtn?.addEventListener('click', () => {
+        if (drawerPanel.classList.contains('open')) closeDrawer();
+        else openDrawer();
+    });
+    drawerOverlay?.addEventListener('click', closeDrawer);
+    drawerClose?.addEventListener('click', closeDrawer);
+
+    // 渲染历史转盘卡片列表
+    function renderPresets() {
+        const list = presetStore.load();
+        presetCount.textContent = `${list.length} / ${presetStore.MAX}`;
+        if (list.length === 0) {
+            presetEmpty.style.display = 'block';
+            presetList.innerHTML = '';
+            presetList.appendChild(presetEmpty);
+            return;
         }
-    }, 3000);
-}
+        presetEmpty.style.display = 'none';
+        presetList.innerHTML = list.map(snapshot => {
+            const colors = colorSchemes[snapshot.config.colorScheme] || colorSchemes.default;
+            const firstColor = colors[0];
+            const cfg = snapshot.config;
+            const time = new Date(snapshot.createdAt);
+            const mmd = `${time.getMonth() + 1}/${time.getDate()}`;
+            const hh = String(time.getHours()).padStart(2, '0');
+            const mm = String(time.getMinutes()).padStart(2, '0');
+            return `
+                <div class="preset-card" data-id="${snapshot.id}" role="button" tabindex="0">
+                    <div class="preset-color" style="background: linear-gradient(135deg, ${colors[0]} 0%, ${colors[Math.min(2, colors.length - 1)]} 100%);"></div>
+                    <div class="preset-info">
+                        <div class="preset-name">${escapeHtml(snapshot.name)}</div>
+                        <div class="preset-meta">${cfg.options.length} 项 · ${cfg.colorScheme} · ${mmd} ${hh}:${mm}</div>
+                    </div>
+                    <button class="preset-delete" data-del="${snapshot.id}" title="删除" aria-label="删除">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // 卡片点击 → 恢复 preset
+        presetList.querySelectorAll('.preset-card').forEach(card => {
+            card.addEventListener('click', e => {
+                if (e.target.closest('.preset-delete')) return;  // 删除按钮单独处理
+                const id = card.dataset.id;
+                const snap = presetStore.load().find(s => s.id === id);
+                if (!snap) return;
+                wheel.applyPreset(snap);
+                closeDrawer();
+            });
+            card.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+            });
+        });
+        // 删除按钮
+        presetList.querySelectorAll('.preset-delete').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                const id = btn.dataset.del;
+                const snap = presetStore.load().find(s => s.id === id);
+                const name = snap ? snap.name : '该项';
+                if (confirm(`删除历史转盘「${name}」？`)) {
+                    presetStore.remove(id);
+                    sound.click();
+                    showToast('已删除');
+                    renderPresets();
+                }
+            });
+        });
+    }
+
+    // 保存当前转盘
+    saveCurrentBtn?.addEventListener('click', () => {
+        const options = wheel.options;
+        if (options.length < 2) { showToast('至少需要 2 个选项才能保存'); return; }
+        // 如果已达上限，提示最旧的会被挤掉
+        const curCount = presetStore.load().length;
+        if (curCount >= presetStore.MAX) {
+            if (!confirm(`历史转盘最多保存 ${presetStore.MAX} 条，保存后最旧的将被覆盖。继续？`)) return;
+        }
+        const defaultName = options[0] + (options.length > 1 ? ` 等${options.length}项` : '');
+        const name = prompt('给这个转盘起个名字（可留空自动命名）：', defaultName) || defaultName;
+        wheel.saveCurrentAsPreset(name);
+        showToast('已保存 ✓');
+        renderPresets();
+    });
+
+    // 快捷链接占位提示（用户未填 GitHub URL 时）
+    const githubLink = document.getElementById('githubLink');
+    const feedbackLink = document.getElementById('feedbackLink');
+    [githubLink, feedbackLink].forEach(link => {
+        if (link && link.getAttribute('href') === '#') {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                showToast('即将开放，敬请期待');
+            });
+        }
+    });
+
+    // 历史
+    renderHistory();
+
+    // 从 URL 参数加载模板
+    const tpl = new URLSearchParams(window.location.search).get('template');
+    if (tpl && templates[tpl]) wheel.loadTemplate(tpl);
+
+    // 响应窗口大小变化
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { wheel.setupCanvas(); wheel.draw(); }, 200);
+    });
+
+    console.log('🎡 幸运转盘 Carnival Wheel 已初始化');
+});
