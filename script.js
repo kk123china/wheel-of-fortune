@@ -62,66 +62,12 @@ const recommendationDatabase = {
     '心情': ['开心', '难过', '愤怒', '焦虑', '平静', '兴奋', '疲惫', '放松'],
 };
 
-// ==================== 音效系统（Web Audio API，无需外部文件）====================
-
-class SoundEngine {
-    constructor() {
-        this.enabled = false;
-        this.ctx = null;
-        this.touchStart = null;
-    }
-
-    async ensureCtx() {
-        if (!this.ctx) {
-            try {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch {
-                return null;
-            }
-        }
-        if (this.ctx.state === 'suspended') {
-            await this.ctx.resume();
-        }
-        return this.ctx;
-    }
-
-    toggle(on) {
-        this.enabled = on;
-        const btn = document.getElementById('soundToggle');
-        btn?.classList.toggle('active', on);
-        if (on) this.ensureCtx();
-    }
-
-    beep(freq, duration = 0.1, type = 'sine', gain = 0.15) {
-        if (!this.enabled) return;
-        this.ensureCtx().then(ctx => {
-            if (!ctx) return;
-            const osc = ctx.createOscillator();
-            const g = ctx.createGain();
-            osc.type = type;
-            osc.frequency.value = freq;
-            g.gain.value = 0;
-            osc.connect(g).connect(ctx.destination);
-            const now = ctx.currentTime;
-            g.gain.linearRampToValueAtTime(gain, now + 0.01);
-            g.gain.exponentialRampToValueAtTime(0.001, now + duration);
-            osc.start(now);
-            osc.stop(now + duration + 0.02);
-        });
-    }
-
-    click()    { this.beep(720, 0.06, 'square', 0.08); }
-    addOpt()   { this.beep(560, 0.08, 'triangle', 0.12); this.beep(820, 0.08, 'triangle', 0.1, Date.now() + 60); }
-    spinStart(){ this.beep(180, 0.25, 'sawtooth', 0.1); }
-    win() {
-        [523, 659, 784, 1046].forEach((f, i) => {
-            setTimeout(() => this.beep(f, 0.18, 'triangle', 0.18), i * 90);
-        });
-    }
-    pop() { this.beep(420, 0.05, 'sine', 0.1); }
-}
-
-const sound = new SoundEngine();
+// ==================== 音效（已移除）====================
+const sound = {
+    toggle() {}, ensureCtx() {},
+    click() {}, addOpt() {}, spinStart() {}, win() {}, pop() {},
+    enabled: false
+};
 
 // ==================== 撒花粒子系统 ====================
 
@@ -422,11 +368,7 @@ class Wheel {
             sound.pop();
         });
 
-        // 音效
-        document.getElementById('soundToggle').addEventListener('click', () => {
-            sound.toggle(!sound.enabled);
-            if (sound.enabled) sound.click();
-        });
+        // 音效已移除
     }
 
     addFromInput() {
@@ -971,8 +913,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => mo.disconnect(), 3000);
     }
 
-    // 音效默认开启（需要用户交互才能启动 AudioContext）
-    document.getElementById('soundToggle').classList.add('active');
+    // 音效已移除
+    document.getElementById('soundToggle')?.classList.add('active');
     sound.toggle(true);
     // 用户第一次交互时激活
     const activateOnFirst = () => {
