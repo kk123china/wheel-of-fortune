@@ -106,7 +106,7 @@
                 </div>
                 <div class="input-group">
                     <input type="text" id="optionInput" placeholder="输入新选项..." maxlength="20">
-                    <button id="addOptionBtn" class="btn-neon">添加</button>
+                    <button id="addOptionBtn" >添加</button>
                 </div>
                 <div class="options-list" id="optionsList"></div>
                 <p class="hint-text" id="hintText">至少添加 2 个选项</p>
@@ -127,7 +127,7 @@
                     <option value="breakfast">早餐选择</option>
                     <option value="task">任务分配</option>
                     <option value="number">数字抽奖 1-8</option>
-                    <option value="number100">数字抽奖 1-100</option>
+                    <option value="range">自定义数字范围…</option>
                     <option value="yesno">是 / 否决定</option>
                     <option value="coin">抛硬币（正 / 反）</option>
                     <option value="date">约会地点</option>
@@ -137,7 +137,7 @@
             </div>
 
             <!-- 智能推荐 -->
-            <div class="panel panel-glow">
+            <div class="panel">
                 <div class="panel-head">
                     <span class="panel-icon" aria-hidden="true">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -146,7 +146,7 @@
                 </div>
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="输入关键词：美食、电影、旅游...">
-                    <button id="searchBtn" class="btn-neon">搜索</button>
+                    <button id="searchBtn" >搜索</button>
                 </div>
                 <div class="hot-tags">
                     <button class="tag-btn" data-category="美食">美食</button>
@@ -218,6 +218,26 @@
                 </div>
             </div>
 
+                        <!-- ② 历史转盘列表 -->
+            <section class="panel preset-panel">
+                <h3 class="panel preset-panel-title">
+                    历史转盘
+                    <span class="drawer-count" id="presetCount">0 / 10</span>
+                </h3>
+                <div class="preset-list" id="presetList">
+                    <!-- 空状态 -->
+                    <div class="preset-empty" id="presetEmpty">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                        </svg>
+                        <p>还没有保存过转盘</p>
+                        <p class="hint">点击上方按钮保存当前配置</p>
+                    </div>
+                    <!-- JS 渲染 preset-card 到这里 -->
+                </div>
+            </section>
+
         </section>
     </main>
 
@@ -234,6 +254,30 @@
             <div class="modal-actions">
                 <button class="modal-button" id="closeModalBtn">再转一次</button>
                 <button class="modal-button ghost" id="copyResultBtn">复制结果</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数字范围弹窗 -->
+    <div class="modal-overlay" id="rangeModal" hidden>
+        <div class="modal-content">
+            <h2 class="result-title">🎲 自定义数字范围</h2>
+            <p class="range-hint">输入最小值和最大值，转盘会生成每个精确数字。</p>
+            <div class="range-inputs">
+                <label>
+                    <span>最小值</span>
+                    <input type="number" id="rangeMin" value="1" min="-9999" max="99999">
+                </label>
+                <span class="range-dash">—</span>
+                <label>
+                    <span>最大值</span>
+                    <input type="number" id="rangeMax" value="100" min="-9999" max="99999">
+                </label>
+            </div>
+            <p class="range-preview" id="rangePreview">100 个数字</p>
+            <div class="modal-actions">
+                <button class="modal-button" id="rangeConfirmBtn">生成并加载</button>
+                <button class="modal-button ghost" id="rangeCancelBtn">取消</button>
             </div>
         </div>
     </div>
@@ -267,25 +311,7 @@
                 </button>
             </section>
 
-            <!-- ② 历史转盘列表 -->
-            <section class="drawer-section">
-                <h3 class="drawer-section-title">
-                    历史转盘
-                    <span class="drawer-count" id="presetCount">0 / 10</span>
-                </h3>
-                <div class="preset-list" id="presetList">
-                    <!-- 空状态 -->
-                    <div class="preset-empty" id="presetEmpty">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-                            <path d="M21 3v5h-5"/>
-                        </svg>
-                        <p>还没有保存过转盘</p>
-                        <p class="hint">点击上方按钮保存当前配置</p>
-                    </div>
-                    <!-- JS 渲染 preset-card 到这里 -->
-                </div>
-            </section>
+            <!-- 历史转盘已移回主界面 -->
 
             <!-- ③ 快捷链接 -->
             <section class="drawer-section">
@@ -307,6 +333,11 @@
             </section>
         </div>
 
+        <!-- 原页面底部横幅（现移进抽屉）-->
+        <footer class="site-footer">
+            <span class="site-kk">© KK</span>
+        </footer>
+
         <!-- 抽屉内 KK 版权 -->
         <footer class="drawer-footer">
             <span class="kk-logo">KK</span>
@@ -319,10 +350,7 @@
         <script src="https://keepandroidopen.org/banner.js"></script>
     </div>
 
-    <!-- 页面最底部 KK 版权 -->
-    <footer class="site-footer">
-        <span class="site-kk">© KK</span>
-    </footer>
+    <!-- （site-footer 已移进抽屉）-->
 
     <script src="script.js"></script>
 </body>

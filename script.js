@@ -24,7 +24,7 @@ const templates = {
     game:      ['王者荣耀', '原神', '和平精英', '塞尔达', '我的世界', '马里奥', '英雄联盟', 'CS2'],
     task:      ['写报告', '开会', '代码审查', '文档整理', '测试', '优化', '学习新技术', '摸鱼'],
     number:    ['1', '2', '3', '4', '5', '6', '7', '8'],
-    number100: ['1-25', '26-50', '51-75', '76-100', '单数', '偶数', '随机'],
+    range:     '__CUSTOM_RANGE__',  // 特殊标志：触发弹窗让用户填 min/max 生成精确数字
     yesno:     ['是', '否'],
     coin:      ['正面', '反面'],
 };
@@ -347,6 +347,29 @@ class Wheel {
             if (e.target.id === 'resultModal') this.closeModal();
         });
 
+        // 数字范围弹窗
+        const rangeMin = document.getElementById('rangeMin');
+        const rangeMax = document.getElementById('rangeMax');
+        const rangePrev = document.getElementById('rangePreview');
+        const updateRangePreview = () => {
+            const mn = parseInt(rangeMin.value, 10);
+            const mx = parseInt(rangeMax.value, 10);
+            if (!Number.isNaN(mn) && !Number.isNaN(mx) && mn < mx) {
+                rangePrev.textContent = `${mx - mn + 1} 个数字（${mn} ~ ${mx}）`;
+            } else if (!Number.isNaN(mn) && !Number.isNaN(mx)) {
+                rangePrev.textContent = '⚠️ 最小值需小于最大值';
+            } else {
+                rangePrev.textContent = '请输入数字';
+            }
+        };
+        rangeMin?.addEventListener('input', updateRangePreview);
+        rangeMax?.addEventListener('input', updateRangePreview);
+        document.getElementById('rangeConfirmBtn').addEventListener('click', applyNumberRange);
+        document.getElementById('rangeCancelBtn').addEventListener('click', closeRangeModal);
+        document.getElementById('rangeModal').addEventListener('click', e => {
+            if (e.target.id === 'rangeModal') closeRangeModal();
+        });
+
         // 历史清空
         document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
             if (confirm('确定要清空所有历史记录吗？')) {
@@ -404,6 +427,7 @@ class Wheel {
 
     loadTemplate(key) {
         if (this.isSpinning) return;
+        if (key === 'range') { openRangeModal(); return; }
         const tpl = templates[key];
         if (!tpl) return;
         this.options = [...tpl];
@@ -851,10 +875,10 @@ function showToast(msg) {
         toast.className = 'toast-notification';
         toast.style.cssText = `
             position: fixed; top: 20px; right: 50%; transform: translateX(50%);
-            background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
             color: white; padding: 12px 22px; border-radius: 50px;
             z-index: 2000; font-weight: 700; font-size: 14px; letter-spacing: 1px;
-            box-shadow: var(--glow-pink); animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 8px rgba(255, 46, 147, 0.35); animation: fadeIn 0.3s ease;
             pointer-events: none;
         `;
         document.body.appendChild(toast);
@@ -863,6 +887,53 @@ function showToast(msg) {
     toast.style.opacity = '1';
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+}
+
+// ==================== 数字范围弹窗 ====================
+
+function openRangeModal() {
+    const modal = document.getElementById('rangeModal');
+    if (!modal) { showToast('弹窗 DOM 未找到'); return; }
+    modal.hidden = false;
+    document.getElementById('rangeMin').value = '1';
+    document.getElementById('rangeMax').value = '100';
+    setTimeout(() => document.getElementById('rangeMin').focus(), 100);
+}
+
+function closeRangeModal() {
+    const modal = document.getElementById('rangeModal');
+    if (modal) modal.hidden = true;
+}
+
+function applyNumberRange() {
+    const minInput = document.getElementById('rangeMin');
+    const maxInput = document.getElementById('rangeMax');
+    const min = parseInt(minInput.value, 10);
+    const max = parseInt(maxInput.value, 10);
+
+    if (Number.isNaN(min) || Number.isNaN(max)) {
+        showToast('请输入有效数字'); return;
+    }
+    if (min >= max) {
+        showToast('最小值必须小于最大值'); return;
+    }
+    const count = max - min + 1;
+    if (count > 300) {
+        showToast(`范围太大（${count}项），会拥挤。试试 ≤300？`); return;
+    }
+    if (count < 2) {
+        showToast('至少需要 2 个数字'); return;
+    }
+
+    const wheel = window.wheel;
+    if (!wheel) { showToast('转盘未就绪'); return; }
+
+    wheel.options = Array.from({ length: count }, (_, i) => String(min + i));
+    wheel.renderOptionsList();
+    wheel.updateSpinState();
+    wheel.draw();
+    closeRangeModal();
+    showToast(`已加载 ${min} ~ ${max}（${count} 个数字）`);
 }
 
 // ==================== 应用初始化 ====================
@@ -927,8 +998,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', activateOnFirst);
     document.addEventListener('touchstart', activateOnFirst);
 
-    // 创建转盘
-    const wheel = new Wheel();
+    // 创建转盘（挂 window 让外部工具函数能访问）
+    const wheel = window.wheel = new Wheel();
 
     // ==================== 菜单抽屉系统 ====================
     const menuBtn = document.getElementById('menuBtn');
