@@ -826,51 +826,43 @@ input[type="range"]::-moz-range-thumb {
     vertical-align: middle;
 }
 
-/* 底部横幅：缩小显示、固定贴底、弱化存在感 */
+/* banner.js 注入的横幅容器（在 drawer 内部）*/
 .bottom-banner {
-    /* 保留占位，真实 banner.js 会在 body 根层插入 .kao-banner */
-    display: none;
+    padding: 8px 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(220, 220, 235, 0.7);
 }
-/* 直接命中 keepandroidopen.org/banner.js 注入的 DOM —— 强制移到底部、全宽、缩小字号不裁内容 */
-.kao-banner {
-    position: fixed !important;
-    bottom: 0 !important;
-    top: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
+.bottom-banner .kao-banner {
+    /* banner.js 注入进来的真实节点，继承容器样式，不再 fixed */
+    position: static !important;
+    width: 100% !important;
     max-width: none !important;
     height: auto !important;
     max-height: none !important;
-    min-height: 0 !important;
-    transform: none !important;
     overflow: visible !important;
-    z-index: 5 !important;
-    pointer-events: auto;
-    font-size: 12px !important;
-    line-height: 1.3 !important;
-    padding: 6px 14px !important;
-    box-sizing: border-box !important;
-}
-/* 横幅内部元素也按比例缩小，倒计时等完整显示 */
-.kao-banner > * {
-    font-size: 12px !important;
-    line-height: 1.3 !important;
-    margin: 0 6px 0 0 !important;
+    z-index: auto !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
     padding: 0 !important;
-}
-.kao-banner .kao-banner-close,
-.kao-banner button {
-    font-size: 12px !important;
-    width: auto !important;
-    height: auto !important;
-    min-height: 0 !important;
-    padding: 2px 6px !important;
     margin: 0 !important;
 }
-@media (max-width: 480px) {
-    .kao-banner { font-size: 10px !important; padding: 4px 10px !important; }
-    .kao-banner > * { font-size: 10px !important; }
+.bottom-banner .kao-banner > * {
+    font-size: inherit !important;
+    line-height: inherit !important;
+}
+.bottom-banner .kao-banner .kao-banner-close,
+.bottom-banner .kao-banner button {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
 }
 
 /* --- 历史记录 --- */

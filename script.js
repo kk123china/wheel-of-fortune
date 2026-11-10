@@ -942,32 +942,31 @@ document.addEventListener('DOMContentLoaded', () => {
     confetti = new Confetti('confettiCanvas');
     initTheme();
 
-    // banner.js 会给自己注入固定尺寸样式（如 width:579px），
-    // 横幅已移进菜单抽屉（index.html 的 bottom-banner div），
-    // 这里只清 banner.js 注入的 width 限制，让横幅在抽屉容器里自然流动。
-    const fixBanner = () => {
-        const b = document.querySelector('.kao-banner') || document.querySelector('.bottom-banner [class*="banner"]') || document.querySelector('[class*="banner"]');
-        if (!b) return false;
-        // 只清 banner.js 硬写的固定尺寸，不强制位置
-        const el = b.classList.contains('kao-banner') ? b : b.closest('.bottom-banner') || b;
-        // 如果 banner 被强制 fixed，先撤掉
-        const style = el.getAttribute('style') || '';
-        const cleaned = style
-            .replace(/position\s*:\s*fixed[^;]*/gi, '')
-            .replace(/bottom\s*:\s*0[^;]*/gi, '')
-            .replace(/z-index\s*:\s*\d+[^;]*/gi, '');
-        el.setAttribute('style', cleaned);
-        // 子元素清 width 限制
-        for (const child of el.children) {
-            child.style.width = 'auto';
-            child.style.maxWidth = 'none';
-        }
+    // banner.js (keepandroidopen.org/banner.js) 会强制往 body 根层 appendChild
+    // 一个 .kao-banner 节点，无视我把 <script> 放在哪里。
+    // 修复策略：banner 注入后立刻 move 到抽屉里的 .bottom-banner div 内，
+    // 同时清掉 banner.js 自己写的 fixed 样式 —— 让它在抽屉容器里自然流动。
+    const moveBannerIntoDrawer = () => {
+        const banner = document.querySelector('.kao-banner');
+        const slot = document.querySelector('.bottom-banner');
+        if (!banner || !slot) return false;
+        // 如果 banner 还不在 slot 里，移动
+        if (!slot.contains(banner)) slot.appendChild(banner);
+        // 清 banner.js 硬写的 fixed + 尺寸（CSS 层会覆盖剩下的）
+        banner.style.position = 'static';
+        banner.style.bottom = 'auto';
+        banner.style.zIndex = 'auto';
+        banner.style.width = '100%';
+        banner.style.maxWidth = 'none';
+        banner.style.left = 'auto';
+        banner.style.right = 'auto';
+        banner.style.top = 'auto';
         return true;
     };
-    if (!fixBanner()) {
-        const mo = new MutationObserver(() => { if (fixBanner()) mo.disconnect(); });
+    if (!moveBannerIntoDrawer()) {
+        const mo = new MutationObserver(() => { if (moveBannerIntoDrawer()) mo.disconnect(); });
         mo.observe(document.body, { childList: true, subtree: true });
-        setTimeout(() => mo.disconnect(), 3000);
+        setTimeout(() => mo.disconnect(), 4000);
     }
 
     // 音效已移除
