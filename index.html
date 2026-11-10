@@ -218,25 +218,6 @@
                 </div>
             </div>
 
-                        <!-- ② 历史转盘列表 -->
-            <section class="panel preset-panel">
-                <h3 class="panel preset-panel-title">
-                    历史转盘
-                    <span class="drawer-count" id="presetCount">0 / 10</span>
-                </h3>
-                <div class="preset-list" id="presetList">
-                    <!-- 空状态 -->
-                    <div class="preset-empty" id="presetEmpty">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
-                            <path d="M21 3v5h-5"/>
-                        </svg>
-                        <p>还没有保存过转盘</p>
-                        <p class="hint">点击上方按钮保存当前配置</p>
-                    </div>
-                    <!-- JS 渲染 preset-card 到这里 -->
-                </div>
-            </section>
 
         </section>
     </main>
@@ -311,7 +292,25 @@
                 </button>
             </section>
 
-            <!-- 历史转盘已移回主界面 -->
+            <!-- ② 历史转盘列表 -->
+            <section class="drawer-section">
+                <h3 class="drawer-section-title">
+                    历史转盘
+                    <span class="drawer-count" id="presetCount">0 / 10</span>
+                </h3>
+                <div class="preset-list" id="presetList">
+                    <!-- 空状态 -->
+                    <div class="preset-empty" id="presetEmpty">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                        </svg>
+                        <p>还没有保存过转盘</p>
+                        <p class="hint">点击上方按钮保存当前配置</p>
+                    </div>
+                    <!-- JS 渲染 preset-card 到这里 -->
+                </div>
+            </section>
 
             <!-- ③ 快捷链接 -->
             <section class="drawer-section">
