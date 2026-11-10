@@ -942,39 +942,25 @@ document.addEventListener('DOMContentLoaded', () => {
     confetti = new Confetti('confettiCanvas');
     initTheme();
 
-    // 把 banner.js 注入的横幅强制挪到底部、全宽、不裁内容
-    // banner.js 会给自己注入 <style> 规则（含 width:579px），比普通 !important 还难覆盖
-    // 最稳方案：直接 setAttribute('style', ...!important) 写死整串内联样式
-    const FIX_BANNER_STYLE = [
-        'position: fixed !important',
-        'bottom: 0 !important',
-        'top: auto !important',
-        'left: 0 !important',
-        'right: 0 !important',
-        'width: 100vw !important',
-        'min-width: 100vw !important',
-        'max-width: none !important',
-        'height: auto !important',
-        'max-height: none !important',
-        'min-height: 0 !important',
-        'transform: none !important',
-        'overflow: visible !important',
-        'z-index: 5 !important',
-        'font-size: 12px !important',
-        'line-height: 1.3 !important',
-        'padding: 6px 14px !important',
-        'box-sizing: border-box !important',
-        'text-align: center !important',
-    ].join('; ');
+    // banner.js 会给自己注入固定尺寸样式（如 width:579px），
+    // 横幅已移进菜单抽屉（index.html 的 bottom-banner div），
+    // 这里只清 banner.js 注入的 width 限制，让横幅在抽屉容器里自然流动。
     const fixBanner = () => {
-        const b = document.querySelector('.kao-banner') || document.querySelector('[class*="banner"]');
+        const b = document.querySelector('.kao-banner') || document.querySelector('.bottom-banner [class*="banner"]') || document.querySelector('[class*="banner"]');
         if (!b) return false;
-        b.setAttribute('style', FIX_BANNER_STYLE);
-        // 子元素也清掉 banner.js 可能写的 width 限制
-        for (const child of b.children) {
+        // 只清 banner.js 硬写的固定尺寸，不强制位置
+        const el = b.classList.contains('kao-banner') ? b : b.closest('.bottom-banner') || b;
+        // 如果 banner 被强制 fixed，先撤掉
+        const style = el.getAttribute('style') || '';
+        const cleaned = style
+            .replace(/position\s*:\s*fixed[^;]*/gi, '')
+            .replace(/bottom\s*:\s*0[^;]*/gi, '')
+            .replace(/z-index\s*:\s*\d+[^;]*/gi, '');
+        el.setAttribute('style', cleaned);
+        // 子元素清 width 限制
+        for (const child of el.children) {
             child.style.width = 'auto';
             child.style.maxWidth = 'none';
-            child.style.fontSize = 'inherit';
         }
         return true;
     };
