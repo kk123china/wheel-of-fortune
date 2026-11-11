@@ -963,11 +963,23 @@ document.addEventListener('DOMContentLoaded', () => {
         banner.style.top = 'auto';
         return true;
     };
+    const hideEmptySlot = () => {
+        const slot = document.querySelector('.bottom-banner');
+        if (slot && !slot.querySelector('.kao-banner')) slot.style.display = 'none';
+    };
     if (!moveBannerIntoDrawer()) {
-        const mo = new MutationObserver(() => { if (moveBannerIntoDrawer()) mo.disconnect(); });
+        const mo = new MutationObserver(() => { if (moveBannerIntoDrawer()) { mo.disconnect(); } });
         mo.observe(document.body, { childList: true, subtree: true });
-        setTimeout(() => mo.disconnect(), 4000);
+        // 4s 后还没抓到 banner → 认为 banner.js 加载失败（adblock/网络），隐藏空容器
+        setTimeout(() => { mo.disconnect(); hideEmptySlot(); }, 4000);
     }
+    // 额外保险：监听 banner.js 的 script 加载错误
+    document.addEventListener('error', (e) => {
+        const tgt = e.target;
+        if (tgt && tgt.tagName === 'SCRIPT' && tgt.src && tgt.src.includes('banner.js')) {
+            hideEmptySlot();
+        }
+    }, true);
 
     // 音效已移除
     document.getElementById('soundToggle')?.classList.add('active');
